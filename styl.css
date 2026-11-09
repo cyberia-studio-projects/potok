@@ -1,0 +1,66 @@
+/* Potok – wygląd. Kolory w zmiennych, jasny i ciemny motyw. */
+:root {
+  --tlo: #f4f5f7; --karta: #ffffff; --tekst: #1d2330; --slaby: #626b7a;
+  --akcent: #2b5d8a; --akcent-tlo: #e3edf6; --ramka: #d9dde3;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --tlo: #15181d; --karta: #1f242b; --tekst: #e8eaee; --slaby: #9aa3b1;
+    --akcent: #7fb2e0; --akcent-tlo: #24384b; --ramka: #343b45;
+  }
+}
+* { box-sizing: border-box; }
+body { margin: 0; font: 16px/1.45 system-ui, sans-serif; background: var(--tlo); color: var(--tekst); }
+header { background: var(--karta); border-bottom: 1px solid var(--ramka); padding: 8px 16px; position: sticky; top: 0; z-index: 1; }
+h1 { margin: 0 0 6px; font-size: 20px; color: var(--akcent); }
+nav { display: flex; flex-wrap: wrap; gap: 6px; }
+nav button { white-space: nowrap; padding: 6px 10px; font-size: 15px; }
+button { font: inherit; border: 1px solid var(--ramka); background: var(--karta); color: var(--tekst);
+  border-radius: 8px; padding: 8px 12px; cursor: pointer; min-height: 40px; }
+button:hover { border-color: var(--akcent); }
+nav button.aktywny, .statusy button.aktywny { background: var(--akcent); color: var(--karta); border-color: var(--akcent); }
+main { max-width: 720px; margin: 0 auto; padding: 16px; }
+.karta { background: var(--karta); border: 1px solid var(--ramka); border-radius: 12px; padding: 16px; margin-bottom: 16px; }
+.karta h2 { margin: 6px 0 10px; font-size: 19px; overflow-wrap: anywhere; }
+.data { color: var(--slaby); font-size: 14px; }
+.data strong { color: var(--tekst); }
+.uwaga { font-size: 12px; }
+.link { display: inline-block; margin: 4px 0 10px; color: var(--akcent); font-weight: 600; overflow-wrap: anywhere; }
+.link span { font-weight: 400; color: var(--slaby); }
+.oryginal { font-size: 14px; color: var(--slaby); overflow-wrap: anywhere; }
+.oryginal span { font-weight: 600; }
+.notatka { font-style: italic; color: var(--slaby); }
+.sugestia { font-size: 14px; background: var(--akcent-tlo); padding: 6px 10px; border-radius: 8px; }
+.prywatne { width: 100%; margin-top: 12px; color: var(--slaby); }
+.prywatne.wlaczone, .dalej button.wlaczone { background: var(--akcent-tlo); border: 2px solid var(--akcent); color: var(--tekst); }
+.zablokowany { color: var(--slaby); }
+.karta > button.aktywny { background: var(--akcent); color: var(--karta); border-color: var(--akcent); }
+h1 small { font-size: 13px; color: var(--slaby); font-weight: 400; }
+.decyzje { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+.decyzje button { min-height: 52px; font-weight: 600; }
+/* Nieparzysta liczba przycisków: ostatni (Archiwum) na całą szerokość. */
+.decyzje button:last-child:nth-child(odd) { grid-column: 1 / -1; }
+.decyzje button.sugerowany { border: 2px solid var(--akcent); background: var(--akcent-tlo); }
+.drugorzedne { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+.drugorzedne button { color: var(--slaby); font-size: 14px; }
+.pasek { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; color: var(--slaby); }
+.pusto { text-align: center; font-size: 18px; }
+.pomoc { color: var(--slaby); font-size: 14px; }
+.statusy { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+#szukaj, form input { width: 100%; font: inherit; padding: 10px; border: 1px solid var(--ramka); border-radius: 8px;
+  background: var(--karta); color: var(--tekst); margin: 4px 0 12px; }
+form label { display: block; font-weight: 600; }
+.lista { list-style: none; padding: 0; margin: 0; }
+.lista li { background: var(--karta); border: 1px solid var(--ramka); border-radius: 10px; padding: 10px 12px; margin-bottom: 8px; }
+.lista .tytul { margin: 2px 0 6px; overflow-wrap: anywhere; }
+.lista a { color: var(--akcent); }
+.dalej { display: flex; flex-wrap: wrap; gap: 6px; }
+.dalej button { min-height: 36px; padding: 4px 10px; font-size: 14px; }
+.lista select { font: inherit; padding: 4px; border-radius: 6px; background: var(--karta); color: var(--tekst); border: 1px solid var(--ramka); }
+.plik { display: block; margin: 10px 0; font-weight: 600; }
+.plik input { display: block; margin-top: 6px; max-width: 100%; }
+.wynik { font-weight: 600; }
+.karta > button { margin: 4px 4px 4px 0; }
+#komunikat { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--tekst); color: var(--tlo);
+  padding: 10px 16px; border-radius: 8px; max-width: calc(100% - 32px); }
+.naglowek { margin: 0 0 4px; font-size: 19px; }

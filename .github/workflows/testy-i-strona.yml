@@ -1,0 +1,45 @@
+# Przy każdej zmianie: najpierw testy, a jeśli przejdą – publikacja strony.
+# Jeśli testy nie przejdą, strona zostaje w poprzedniej (działającej) wersji.
+name: Testy i strona
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: strona
+  cancel-in-progress: false
+
+jobs:
+  testy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npx playwright install --with-deps chromium
+      - run: node testy/uruchom-testy.js
+      - run: node testy/e2e.js
+
+  strona:
+    needs: testy
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.publikacja.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: publikacja
+        uses: actions/deploy-pages@v4

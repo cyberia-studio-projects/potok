@@ -1,0 +1,9 @@
+# Twoje dane i prywatne pliki – NIGDY do publicznego repozytorium.
+*.docx
+!testy/przyklad.docx
+*.json.bak
+Potok-kopia-*.json
+zrzut-*.png
+# Narzędzia do testów
+node_modules/
+package-lock.json

@@ -1,0 +1,104 @@
+<!doctype html>
+<!-- Potok – skrzynka linków. Strona główna aplikacji.
+     Kolejność skryptów ma znaczenie: magazyn → zip → import → eksport → app. -->
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Potok</title>
+  <meta name="theme-color" content="#2b5d8a">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="ikona.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styl.css">
+</head>
+<body>
+  <header>
+    <h1>Potok <small id="znak-urzadzenia"></small></h1>
+    <nav>
+      <button data-widok="przeglad">Przegląd</button>
+      <button data-widok="listy">Listy</button>
+      <button data-widok="zadania">Zadania</button>
+      <button data-widok="dodaj">Dodaj</button>
+      <button data-widok="eksport">Pliki</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Jeden wpis naraz -->
+    <section id="widok-przeglad" class="widok" hidden>
+      <div class="pasek"><span id="licznik"></span><button id="cofnij" hidden>↶ Cofnij</button></div>
+      <article class="karta"></article>
+    </section>
+
+    <!-- Wszystkie wpisy wg statusu -->
+    <section id="widok-listy" class="widok" hidden>
+      <p id="podsumowanie-listy" class="pomoc"></p>
+      <div id="statusy" class="statusy"></div>
+      <input id="szukaj" type="search" placeholder="Szukaj w tytułach i adresach…">
+      <ul id="lista" class="lista"></ul>
+    </section>
+
+    <!-- Do zrobienia: plany i pomysły (wpisy bez linku), osobno od Potoku -->
+    <section id="widok-zadania" class="widok" hidden>
+      <h2 class="naglowek">Do zrobienia</h2>
+      <p class="pomoc">Plany i pomysły. Nie trzeba ich przeglądać – zaglądasz, kiedy chcesz. „Zrobione” niczego nie kasuje.</p>
+      <p id="podsumowanie-zadan" class="pomoc"></p>
+      <div id="zadania-statusy" class="statusy"></div>
+      <ul id="zadania-lista" class="lista"></ul>
+    </section>
+
+    <!-- Ręczne dodanie -->
+    <section id="widok-dodaj" class="widok" hidden>
+      <form id="form-dodaj" class="karta">
+        <label>Link <input id="nowy-url" type="url" placeholder="https://… (można pominąć)" autocomplete="off"></label>
+        <label>Opis (opcjonalnie) <input id="nowy-opis" type="text" placeholder="cokolwiek – decyzję podejmiesz później"></label>
+        <button type="submit">Dodaj do skrzynki</button>
+        <p class="pomoc">Wszystko trafia do skrzynki. Co z tym zrobić, zdecydujesz w przeglądzie. Data dodania zapisze się sama.</p>
+      </form>
+    </section>
+
+    <!-- Import i eksport -->
+    <section id="widok-eksport" class="widok" hidden>
+      <div class="karta">
+        <h2>Import z Google Docs</h2>
+        <p class="pomoc">W Google Docs: Plik → Pobierz → Microsoft Word (.docx). Ponowny import tego samego pliku nie zdubluje wpisów.</p>
+        <label class="plik">Wybierz plik .docx lub .txt <input id="plik-import" type="file" accept=".docx,.txt"></label>
+        <p id="wynik-importu" class="wynik"></p>
+      </div>
+
+      <div class="karta">
+        <h2>Kolejka „Streścić”</h2>
+        <p id="stan-streszczen" class="pomoc"></p>
+        <p class="pomoc">Plik zawiera same adresy, po jednym w linii. W NotebookLM: Dodaj źródło → Witryna, wklej listę.</p>
+        <button id="eksport-streszczen">Pobierz plik .txt</button>
+        <button id="kopiuj-streszczenia">Kopiuj adresy</button>
+      </div>
+
+      <div class="karta">
+        <h2>To urządzenie</h2>
+        <p class="pomoc">Na komputerze służbowym wpisy oznaczone 🏠 „Tylko prywatnie” są widoczne, ale ich link się nie otwiera.</p>
+        <button data-urzadzenie="prywatne">🏠 Mój prywatny komputer / telefon</button>
+        <button data-urzadzenie="sluzbowe">💼 Komputer służbowy</button>
+      </div>
+
+      <div class="karta">
+        <h2>Obsidian i kopia zapasowa</h2>
+        <p id="stan-calosci" class="pomoc"></p>
+        <button id="eksport-obsidian">Pobierz listę „Zapisać do Obsidian” (.md)</button>
+        <button id="eksport-md">Pobierz cały Potok jako .md</button>
+        <button id="eksport-json">Pobierz kopię zapasową (.json)</button>
+        <label class="plik">Przywróć z kopii <input id="plik-kopia" type="file" accept=".json"></label>
+        <p class="pomoc">Dane są tylko w tej przeglądarce, dopóki nie dodamy synchronizacji z Google Drive. Rób kopię co jakiś czas.</p>
+      </div>
+    </section>
+  </main>
+
+  <div id="komunikat" hidden></div>
+
+  <script src="js/magazyn.js"></script>
+  <script src="js/zip.js"></script>
+  <script src="js/import.js"></script>
+  <script src="js/eksport.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

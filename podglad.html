@@ -1,0 +1,25 @@
+<!doctype html>
+<!-- podglad.html – podgląd Potoku w rozmiarze telefonu, na komputerze.
+     Otwórz dwuklikiem. Nic nie trzeba instalować ani wgrywać na telefon.
+     Każda ramka to prawdziwa aplikacja (index.html), działa normalnie.
+     Dokładniejsza emulacja: w Chrome/Edge F12, potem Ctrl+Shift+M. -->
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <title>Potok – podgląd telefonu</title>
+  <style>
+    body { margin: 0; padding: 16px; font: 14px system-ui, sans-serif; background: #d9dde3; }
+    .rzad { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+    figure { margin: 0; }
+    figcaption { margin-bottom: 6px; font-weight: 600; }
+    iframe { border: 10px solid #222; border-radius: 28px; background: #fff; }
+  </style>
+</head>
+<body>
+  <p>Podgląd Potoku w rozmiarach urządzeń. Po zmianie w kodzie odśwież stronę (F5).</p>
+  <div class="rzad">
+    <figure><figcaption>Telefon (412 × 860)</figcaption><iframe src="index.html" width="412" height="860"></iframe></figure>
+    <figure><figcaption>Mały telefon (360 × 740)</figcaption><iframe src="index.html" width="360" height="740"></iframe></figure>
+  </div>
+</body>
+</html>

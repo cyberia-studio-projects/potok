@@ -1,0 +1,19 @@
+{
+  "name": "Potok",
+  "short_name": "Potok",
+  "description": "Skrzynka linków: zapis jednym ruchem, przegląd jeden link naraz.",
+  "lang": "pl",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f5f7",
+  "theme_color": "#2b5d8a",
+  "icons": [
+    { "src": "ikona.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ],
+  "share_target": {
+    "action": "./?udostepnij=1",
+    "method": "GET",
+    "params": { "title": "title", "text": "text", "url": "url" }
+  }
+}

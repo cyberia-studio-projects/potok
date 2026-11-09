@@ -1,0 +1,11 @@
+{
+  "name": "potok",
+  "private": true,
+  "description": "Potok – skrzynka linków. Ten plik służy tylko do automatycznych testów; aplikacja nie potrzebuje instalacji.",
+  "scripts": {
+    "test": "node testy/uruchom-testy.js && node testy/e2e.js"
+  },
+  "devDependencies": {
+    "playwright": "1.48.2"
+  }
+}
