@@ -24,7 +24,7 @@ function esc(t) {
 }
 
 // Numer wersji aplikacji – podbijaj razem z WERSJA w sw.js.
-const WERSJA_APLIKACJI = 16;
+const WERSJA_APLIKACJI = 17;
 
 // Krótki komunikat na dole ekranu.
 function komunikat(tekst) {

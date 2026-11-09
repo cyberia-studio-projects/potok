@@ -336,6 +336,7 @@ test('opisy: pobieramy tylko dla tytułów „z automatu”, raz', () => {
   prawda(Opisy.potrzebuje({ url: yt, tytul: yt }), 'goły adres');
   prawda(Opisy.potrzebuje({ url: yt, tytul: Import.tytulZAdresu(yt) }), '„YouTube · id”');
   prawda(!Opisy.potrzebuje({ url: yt, tytul: 'Mój własny opis' }), 'Twój opis zostaje');
+  prawda(Opisy.potrzebuje({ url: yt, tytul: 'Streścić' }), 'samo oznaczenie jako tytuł (stare wpisy)');
   prawda(!Opisy.potrzebuje({ url: yt, tytul: yt, opisPobrany: 'brak' }), 'nie pytamy w kółko');
   prawda(!Opisy.potrzebuje({ url: 'file:///C:/x.pdf', tytul: 'plik: x.pdf' }), 'pliki z dysku – nie');
   prawda(!Opisy.potrzebuje({ url: null, tytul: 'notatka' }), 'bez linku – nie');

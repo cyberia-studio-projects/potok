@@ -9,7 +9,8 @@ const Opisy = {
   /** Czy wpis ma tytuł „z automatu” (sam adres albo „YouTube · id”) – wtedy warto pobrać prawdziwy. */
   potrzebuje(w) {
     if (!w.url || !/^https?:\/\//i.test(w.url) || w.opisPobrany) return false;
-    return !w.tytul || w.tytul === w.url || w.tytul === Import.tytulZAdresu(w.url);
+    // „Streścić” jako tytuł – wpisy dodane przed wersją 16 też się poprawią.
+    return !w.tytul || w.tytul === w.url || w.tytul === Import.tytulZAdresu(w.url) || Import.tylkoOznaczenia(w.tytul);
   },
 
   /** Czy skrypt Google jest za stary (nie umie „opis”) – wtedy Pliki pokazują, jak go zaktualizować. */
