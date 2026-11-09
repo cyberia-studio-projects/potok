@@ -1,5 +1,9 @@
 # Potok – postęp prac i decyzje
 
+## 9.11.2026 – kolejka „Streścić”: które wpisy ręcznie
+- Pytanie: „Streścić 25”, a w pliku 20 adresów. Odpowiedź: 5 to pliki z dysku (file://) lub notatki bez linku, których NotebookLM nie pobierze z adresu. Teraz pod licznikiem jest rozwijana lista tych wpisów (z nazwą/ścieżką pliku). Test w e2e.js sprawdza, że www + ręczne = lista „Streścić”.
+- Usuwanie z Archiwum: na razie zostaje jak jest (nic nie usuwamy).
+
 ## 9.11.2026 – tytuł i autor linków (YouTube, strony, Facebook na ile się da)
 - Prośba: link udostępniony z YouTube zapisywał się jako goły adres. Tytuł i autor przyspieszają segregację.
 - Skrypt Google w wersji 2 ma akcję „opis”. Dla YouTube używa oficjalnego oEmbed, dla innych stron czyta og:title / <title>. Facebook zwykle wymaga logowania, więc tam tytuł bywa pusty.

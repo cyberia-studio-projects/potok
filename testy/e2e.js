@@ -133,6 +133,16 @@ const ZRZUTY = process.argv[3];
   await s.click('[data-przelacz]');                       // ← To jednak treść
   assert.strictEqual(await s.locator('.decyzje button').count(), 7);
 
+  // 8b. Kolejka „Streścić”: widać, które wpisy trzeba dodać ręcznie (pliki z dysku, notatki).
+  await s.evaluate(() => { Magazyn.dodaj([{ url: 'file:///C:/Dokumenty/Raport%20AI.pdf', tytul: 'plik: Raport AI.pdf', tekst: 'Streścić file:///C:/Dokumenty/Raport%20AI.pdf' }]);
+    const w = Magazyn.wczytaj().find(x => x.url === 'file:///C:/Dokumenty/Raport%20AI.pdf'); Magazyn.zmienStatus(w.id, 'do_streszczenia'); });
+  await s.click('nav [data-widok=eksport]');
+  await s.click('#reszta-streszczen summary');
+  assert.match(await s.textContent('#reszta-streszczen'), /C:\/Dokumenty\/Raport AI\.pdf/);
+  const [ileWww, ileReszta] = await s.evaluate(() => { const k = Eksport.kolejkaStreszczen(Magazyn.wczytaj()); return [k.www.length, k.reszta.length]; });
+  assert.strictEqual(await s.locator('#reszta-streszczen li').count(), ileReszta);
+  assert.strictEqual(ileWww + ileReszta, await s.evaluate(() => Magazyn.wczytaj().filter(w => w.status === 'do_streszczenia').length), 'kolejka nie sumuje się do listy Streścić');
+
   // 9. Udostępnij → Potok (jak z Androida).
   await s.goto('file://' + path.join(KATALOG, 'index.html') + '?udostepnij=1&title=Film&text=' + encodeURIComponent('https://youtu.be/abc'));
   const ile = await s.evaluate(() => Magazyn.wczytaj().filter(w => w.zrodlo === 'udostępnij').length);

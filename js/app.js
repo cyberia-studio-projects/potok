@@ -24,7 +24,7 @@ function esc(t) {
 }
 
 // Numer wersji aplikacji – podbijaj razem z WERSJA w sw.js.
-const WERSJA_APLIKACJI = 13;
+const WERSJA_APLIKACJI = 14;
 
 // Krótki komunikat na dole ekranu.
 function komunikat(tekst) {
@@ -321,6 +321,13 @@ function pokazStanEksportu() {
   const { www, reszta } = Eksport.kolejkaStreszczen(wpisy);
   $('#stan-streszczen').textContent =
     `W kolejce: ${www.length} adresów www` + (reszta.length ? ` + ${reszta.length} do dodania ręcznie (lokalne pliki / notatki).` : '.');
+  // Które wpisy trzeba dodać do NotebookLM ręcznie – z nazwą pliku lub treścią notatki.
+  const el = $('#reszta-streszczen');
+  el.hidden = !reszta.length;
+  el.querySelector('summary').textContent = `Pokaż ${reszta.length} do dodania ręcznie`;
+  el.querySelector('ul').innerHTML = reszta.map(w => `<li>${esc(w.tytul)}${w.url
+    ? `<br><span class="uwaga">${esc((() => { const a = w.url.replace(/^file:\/\/\/?/, ''); try { return decodeURIComponent(a); } catch { return a; } })())}</span>`
+    : ' <span class="uwaga">(notatka bez linku)</span>'}</li>`).join('');
   $('#stan-calosci').textContent = `Wszystkich wpisów: ${wpisy.length}.`;
 }
 
