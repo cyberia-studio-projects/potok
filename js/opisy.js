@@ -8,9 +8,26 @@
 const Opisy = {
   /** Czy wpis ma tytuł „z automatu” (sam adres albo „YouTube · id”) – wtedy warto pobrać prawdziwy. */
   potrzebuje(w) {
-    if (!w.url || !/^https?:\/\//i.test(w.url) || w.opisPobrany) return false;
+    // 'brak' (bez „-2”) to nieudana próba sprzed wersji 18 – wtedy linki z miksów
+    // YouTube („&list=RD…”) nie dawały tytułu. Próbujemy je jeszcze raz.
+    if (!w.url || !/^https?:\/\//i.test(w.url) || (w.opisPobrany && w.opisPobrany !== 'brak')) return false;
     // „Streścić” jako tytuł – wpisy dodane przed wersją 16 też się poprawią.
     return !w.tytul || w.tytul === w.url || w.tytul === Import.tytulZAdresu(w.url) || Import.tylkoOznaczenia(w.tytul);
+  },
+
+  /**
+   * Adres wysyłany po tytuł. YouTube: sam film (bez „&list=…”, „&index=…”),
+   * bo YouTube nie podaje tytułu dla linków z miksów i list.
+   */
+  adresDoOpisu(url) {
+    try {
+      const u = new URL(url);
+      const host = u.hostname.replace(/^(www|m|music)\./, '');
+      let id = '';
+      if (host === 'youtube.com') id = u.searchParams.get('v') || (u.pathname.match(/^\/(?:shorts|live|embed)\/([\w-]+)/) || [])[1] || '';
+      if (host === 'youtu.be') id = u.pathname.slice(1).split('/')[0];
+      return id ? 'https://www.youtube.com/watch?v=' + id : url;
+    } catch { return url; }
   },
 
   /** Czy skrypt Google jest za stary (nie umie „opis”) – wtedy Pliki pokazują, jak go zaktualizować. */
@@ -28,13 +45,17 @@ const Opisy = {
         if (!w) return;
         let opis;
         try {
-          opis = await Synchronizacja.doSkryptu({ akcja: 'opis', url: w.url });
+          opis = await Synchronizacja.doSkryptu({ akcja: 'opis', url: this.adresDoOpisu(w.url) });
         } catch (e) {
           if (/nieznana akcja/.test(e.message)) {
             localStorage.setItem(Magazyn.klucz + '.skryptStary', '1');
             window.dispatchEvent(new Event('potok-stan-synchronizacji'));
+            return;
           }
-          return;   // bez internetu / błąd – spróbujemy po następnej synchronizacji
+          // Bez internetu – spróbujemy po następnej synchronizacji.
+          if (!navigator.onLine || e instanceof TypeError) return;
+          // Błąd tylko dla tego linku – nie blokuje pozostałych.
+          opis = null;
         }
         if (this.skryptStary()) {
           localStorage.removeItem(Magazyn.klucz + '.skryptStary');

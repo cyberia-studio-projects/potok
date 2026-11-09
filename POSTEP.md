@@ -1,5 +1,9 @@
 # Potok – postęp prac i decyzje
 
+## 9.11.2026 – tytuły dla linków z miksów YouTube (wersja 18)
+- Zaimportowane linki „watch?v=…&list=RD…&index=…” zostawały jako „YouTube · id”. Prawdopodobna przyczyna: YouTube nie podaje tytułu dla adresu z miksem. Teraz po tytuł idzie sam film (`Opisy.adresDoOpisu`), a stare nieudane próby (`brak`) są ponawiane raz. Nowe nieudane mają `brak-2`.
+- Błąd przy jednym linku (np. skrypt zwrócił stronę błędu) nie zatrzymuje już uzupełniania pozostałych.
+
 ## 9.11.2026 – tytuły także przy dodawaniu na komputerze
 - Gdy w „Dodaj” wpiszesz link i opis składający się z samych oznaczeń („Streścić”, „(Zgłębić)”, „XD”…), tytułem jest adres. Potem w tle pobiera się prawdziwy tytuł i autor, a podpowiedź statusu zostaje. Własny opis („Streścić – wywiad z…”) zostaje tytułem. Wpisy dodane wcześniej z tytułem „Streścić” poprawiają się same (wersja 17). Funkcja `Import.tylkoOznaczenia`; testy w testy.js i e2e-drive.js (krok 9).
 

@@ -337,7 +337,8 @@ test('opisy: pobieramy tylko dla tytułów „z automatu”, raz', () => {
   prawda(Opisy.potrzebuje({ url: yt, tytul: Import.tytulZAdresu(yt) }), '„YouTube · id”');
   prawda(!Opisy.potrzebuje({ url: yt, tytul: 'Mój własny opis' }), 'Twój opis zostaje');
   prawda(Opisy.potrzebuje({ url: yt, tytul: 'Streścić' }), 'samo oznaczenie jako tytuł (stare wpisy)');
-  prawda(!Opisy.potrzebuje({ url: yt, tytul: yt, opisPobrany: 'brak' }), 'nie pytamy w kółko');
+  prawda(!Opisy.potrzebuje({ url: yt, tytul: yt, opisPobrany: 'brak-2' }), 'nie pytamy w kółko');
+  prawda(Opisy.potrzebuje({ url: yt, tytul: yt, opisPobrany: 'brak' }), 'stara nieudana próba – jeszcze raz');
   prawda(!Opisy.potrzebuje({ url: 'file:///C:/x.pdf', tytul: 'plik: x.pdf' }), 'pliki z dysku – nie');
   prawda(!Opisy.potrzebuje({ url: null, tytul: 'notatka' }), 'bez linku – nie');
 });
@@ -346,6 +347,15 @@ test('opisy: dopisane „Streścić” itp. nie blokuje pobrania tytułu, Twój 
     prawda(Import.tylkoOznaczenia(t), t);
   for (const t of ['Streścić – wywiad z Karpathym', 'fajny przepis', 'Claude: zrób z tego notatkę o AI'])
     prawda(!Import.tylkoOznaczenia(t), t);
+});
+test('opisy: po tytuł z YouTube idzie sam film, bez miksu/listy', () => {
+  const film = 'https://www.youtube.com/watch?v=chrT06BDlhM';
+  rowne(Opisy.adresDoOpisu('https://www.youtube.com/watch?v=chrT06BDlhM&list=RDSdPkjh6X_iw&index=4'), film);
+  rowne(Opisy.adresDoOpisu('https://youtu.be/chrT06BDlhM?si=abc'), film);
+  rowne(Opisy.adresDoOpisu('https://m.youtube.com/watch?v=chrT06BDlhM&t=30'), film);
+  rowne(Opisy.adresDoOpisu('https://music.youtube.com/watch?v=chrT06BDlhM&list=X'), film);
+  rowne(Opisy.adresDoOpisu('https://www.youtube.com/shorts/chrT06BDlhM'), film);
+  rowne(Opisy.adresDoOpisu('https://example.com/a?b=1'), 'https://example.com/a?b=1');
 });
 test('opisy: tytuł i autor zapisane, tekst i „zmieniono” bez zmian', () => {
   czysto();
@@ -360,7 +370,7 @@ test('opisy: tytuł i autor zapisane, tekst i „zmieniono” bez zmian', () => 
   const fb = Magazyn.wczytaj().find(x => x.url.includes('facebook'));
   Magazyn.ustawOpis(fb.id, { tytul: '' });
   const fbPo = Magazyn.wczytaj().find(x => x.id === fb.id);
-  rowne([fbPo.tytul, fbPo.opisPobrany], ['Facebook – rolka', 'brak']);
+  rowne([fbPo.tytul, fbPo.opisPobrany], ['Facebook – rolka', 'brak-2']);
 });
 test('scal: tytuł pobrany na jednym urządzeniu nie ginie przez decyzję z drugiego', () => {
   const zTytulem = wpis('a', '2026-11-09T10:00:00Z', { tytul: 'Piosenka', autor: 'Kanał', opisPobrany: '2026-11-09T12:00:00Z' });

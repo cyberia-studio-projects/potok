@@ -34,7 +34,12 @@ async function obsluzSkrypt(route) {
   if (dane.akcja === 'pobierz') return odp({ tresc: drive.skrypt || '{"wersja":1,"wpisy":[]}' });
   if (dane.akcja === 'zapisz') { drive.skrypt = dane.tresc; drive.zapisy++; return odp({ ok: true }); }
   // Akcja „opis” jest od wersji 2 skryptu; stary skrypt jej nie zna.
-  if (dane.akcja === 'opis' && drive.wersjaSkryptu >= 2) return odp({ tytul: 'Tytuł: ' + dane.url, autor: 'Autor testowy' });
+  if (dane.akcja === 'opis' && drive.wersjaSkryptu >= 2) {
+    // Jak prawdziwy YouTube: link z miksu („&list=RD…”) – bez tytułu.
+    if (/youtube\.com.*[?&]list=/.test(dane.url)) return odp({ tytul: '' });
+    if (/zepsuty/.test(dane.url)) return route.fulfill({ status: 200, body: '<html>błąd Google</html>' });
+    return odp({ tytul: 'Tytuł: ' + dane.url, autor: 'Autor testowy' });
+  }
   return odp({ blad: 'nieznana akcja' });
 }
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' };
@@ -217,6 +222,13 @@ async function scenariusz(przegladarka, tryb) {
     await komp.s.click('#sync-teraz');
     await komp.s.waitForFunction(() => Magazyn.wczytaj().find(w => w.url === 'https://example.com/z-komputera').autor === 'Autor testowy', null, { timeout: 15000 });
     // Na komputerze: link z YouTube + dopisane „Streścić” → tytuł i autor też się pobierają, podpowiedź zostaje.
+    // Link z miksu (jak w Twoim imporcie) i link, przy którym skrypt się wywraca – oba nie blokują reszty.
+    for (const url of ['https://example.com/zepsuty', 'https://www.youtube.com/watch?v=miks456&list=RDxyz&index=4']) {
+      await komp.s.click('nav [data-widok=dodaj]');
+      await komp.s.fill('#nowy-url', url);
+      await komp.s.click('#form-dodaj button');
+    }
+    await komp.s.waitForFunction(() => Magazyn.wczytaj().find(x => (x.url || '').includes('miks456')).tytul === 'Tytuł: https://www.youtube.com/watch?v=miks456', null, { timeout: 15000 });
     await komp.s.click('nav [data-widok=dodaj]');
     await komp.s.fill('#nowy-url', 'https://www.youtube.com/watch?v=komp123');
     await komp.s.fill('#nowy-opis', 'Streścić');

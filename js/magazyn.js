@@ -182,7 +182,7 @@ const Magazyn = {
     const w = wpisy.find(x => x.id === id);
     if (!w) return;
     if (opis && opis.tytul) { w.tytul = opis.tytul; w.autor = opis.autor || ''; }
-    w.opisPobrany = opis && opis.tytul ? new Date().toISOString() : 'brak';
+    w.opisPobrany = opis && opis.tytul ? new Date().toISOString() : 'brak-2';
     this.zapisz(wpisy);
   },
 
