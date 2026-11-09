@@ -1,5 +1,9 @@
 # Potok – postęp prac i decyzje
 
+## 9.11.2026 – jeden „wolny” link blokował wszystkie tytuły (wersja 19)
+- Objaw: po wersji 18 dalej żadnych tytułów, nawet danluu.com. Przyczyna (odtworzona w teście): gdy skrypt Google nie odpowie dla jakiegoś linku (np. przekroczy czas na wolnej stronie), przeglądarka zgłasza błąd sieci. Potok uznawał wtedy „brak internetu” i za każdym razem stawał na tym samym linku.
+- Teraz taki link jest pomijany, po 2 próbach dostaje „bez tytułu”, a 3 takie błędy pod rząd = przerwa (raczej sieć). W Pliki → Google Drive jest linijka „Tytuły linków: pobrane · bez tytułu · czekają” i ostatni problem.
+
 ## 9.11.2026 – tytuły dla linków z miksów YouTube (wersja 18)
 - Zaimportowane linki „watch?v=…&list=RD…&index=…” zostawały jako „YouTube · id”. Prawdopodobna przyczyna: YouTube nie podaje tytułu dla adresu z miksem. Teraz po tytuł idzie sam film (`Opisy.adresDoOpisu`), a stare nieudane próby (`brak`) są ponawiane raz. Nowe nieudane mają `brak-2`.
 - Błąd przy jednym linku (np. skrypt zwrócił stronę błędu) nie zatrzymuje już uzupełniania pozostałych.

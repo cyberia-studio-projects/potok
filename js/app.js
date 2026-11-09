@@ -24,7 +24,7 @@ function esc(t) {
 }
 
 // Numer wersji aplikacji – podbijaj razem z WERSJA w sw.js.
-const WERSJA_APLIKACJI = 18;
+const WERSJA_APLIKACJI = 19;
 
 // Krótki komunikat na dole ekranu.
 function komunikat(tekst) {
@@ -290,6 +290,7 @@ function pokazStanSync() {
   $('#sync-polaczone').hidden = !polaczone;
   $('#kopiuj-kod').hidden = !Synchronizacja.skrypt();
   $('#skrypt-aktualizacja').hidden = !(Synchronizacja.skrypt() && Opisy.skryptStary());
+  $('#stan-opisow').textContent = Synchronizacja.skrypt() ? Opisy.podsumowanie(Magazyn.wczytaj()) : '';
   $('#polacz-drive').hidden = !window.USTAWIENIA.googleClientId;
 }
 

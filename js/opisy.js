@@ -30,6 +30,20 @@ const Opisy = {
     } catch { return url; }
   },
 
+  /** Ile razy link nie odpowiedział (pamiętane na tym urządzeniu). */
+  proby() {
+    try { return JSON.parse(localStorage.getItem(Magazyn.klucz + '.opisyProby') || '{}'); } catch { return {}; }
+  },
+
+  /** Krótkie podsumowanie do „Pliki”: ile tytułów jest, ile się nie udało, ile czeka. */
+  podsumowanie(wpisy) {
+    const linki = wpisy.filter(w => w.url && /^https?:/i.test(w.url));
+    const ile = f => linki.filter(f).length;
+    const tekst = `Tytuły linków: pobrane ${ile(w => w.opisPobrany && !/^brak/.test(w.opisPobrany))} · bez tytułu ${ile(w => w.opisPobrany === 'brak-2')} · czekają ${ile(w => this.potrzebuje(w))}.`;
+    const b = this.ostatniBlad;
+    return tekst + (b ? ` Ostatni problem (${b.kiedy.toLocaleTimeString('pl-PL')}): ${b.url} – ${b.tresc}` : '');
+  },
+
   /** Czy skrypt Google jest za stary (nie umie „opis”) – wtedy Pliki pokazują, jak go zaktualizować. */
   skryptStary() {
     return localStorage.getItem(Magazyn.klucz + '.skryptStary') === '1';
@@ -39,9 +53,11 @@ const Opisy = {
   async uzupelnij() {
     if (this.trwa || !navigator.onLine || !Synchronizacja.skrypt()) return;
     this.trwa = true;
+    const pominiete = new Set();   // linki, które w tym przebiegu nie odpowiedziały
+    let bezOdpowiedziPodRzad = 0;
     try {
       for (;;) {
-        const w = Magazyn.wczytaj().find(x => this.potrzebuje(x));
+        const w = Magazyn.wczytaj().find(x => this.potrzebuje(x) && !pominiete.has(x.id));
         if (!w) return;
         let opis;
         try {
@@ -52,17 +68,29 @@ const Opisy = {
             window.dispatchEvent(new Event('potok-stan-synchronizacji'));
             return;
           }
-          // Bez internetu – spróbujemy po następnej synchronizacji.
-          if (!navigator.onLine || e instanceof TypeError) return;
-          // Błąd tylko dla tego linku – nie blokuje pozostałych.
-          opis = null;
+          this.ostatniBlad = { url: w.url, tresc: e.message, kiedy: new Date() };
+          if (!navigator.onLine) return;   // bez internetu – spróbujemy po następnej synchronizacji
+          if (e instanceof TypeError) {
+            // Brak odpowiedzi (np. skrypt Google przekroczył czas na wolnej stronie).
+            // Ten link pomijamy, a po 2 takich próbach uznajemy „bez tytułu”.
+            // 3 razy pod rząd bez odpowiedzi = raczej problem z siecią – przerwa.
+            if (++bezOdpowiedziPodRzad >= 3) return;
+            const proby = this.proby();
+            proby[w.id] = (proby[w.id] || 0) + 1;
+            localStorage.setItem(Magazyn.klucz + '.opisyProby', JSON.stringify(proby));
+            window.dispatchEvent(new Event('potok-stan-synchronizacji'));
+            if (proby[w.id] < 2) { pominiete.add(w.id); continue; }
+          }
+          opis = null;   // błąd tylko dla tego linku – nie blokuje pozostałych
         }
+        bezOdpowiedziPodRzad = opis === null ? bezOdpowiedziPodRzad : 0;
         if (this.skryptStary()) {
           localStorage.removeItem(Magazyn.klucz + '.skryptStary');
           window.dispatchEvent(new Event('potok-stan-synchronizacji'));
         }
         Magazyn.ustawOpis(w.id, opis);
         window.dispatchEvent(new Event('potok-odswiez'));
+        window.dispatchEvent(new Event('potok-stan-synchronizacji'));
       }
     } finally {
       this.trwa = false;
