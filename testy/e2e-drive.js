@@ -216,6 +216,13 @@ async function scenariusz(przegladarka, tryb) {
     drive.wersjaSkryptu = 2;   // „wdrożono nową wersję”
     await komp.s.click('#sync-teraz');
     await komp.s.waitForFunction(() => Magazyn.wczytaj().find(w => w.url === 'https://example.com/z-komputera').autor === 'Autor testowy', null, { timeout: 15000 });
+    // Na komputerze: link z YouTube + dopisane „Streścić” → tytuł i autor też się pobierają, podpowiedź zostaje.
+    await komp.s.click('nav [data-widok=dodaj]');
+    await komp.s.fill('#nowy-url', 'https://www.youtube.com/watch?v=komp123');
+    await komp.s.fill('#nowy-opis', 'Streścić');
+    await komp.s.click('#form-dodaj button');
+    await komp.s.waitForFunction(() => { const w = Magazyn.wczytaj().find(x => (x.url || '').includes('komp123')); return w && w.autor === 'Autor testowy' && w.sugestia === 'do_streszczenia' && w.tekst.startsWith('Streścić'); }, null, { timeout: 15000 });
+    await komp.s.click('nav [data-widok=eksport]');
     await komp.s.waitForSelector('#skrypt-aktualizacja', { state: 'hidden', timeout: 10000 });
     await czekajWysylke(komp.s);
     await komp.s.click('#stan-sync'); await czekajNa(komp.s, /zapisane/);

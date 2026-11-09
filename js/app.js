@@ -24,7 +24,7 @@ function esc(t) {
 }
 
 // Numer wersji aplikacji – podbijaj razem z WERSJA w sw.js.
-const WERSJA_APLIKACJI = 15;
+const WERSJA_APLIKACJI = 16;
 
 // Krótki komunikat na dole ekranu.
 function komunikat(tekst) {
@@ -249,7 +249,9 @@ function dodajRecznie(url, opis, zrodlo) {
   const tekst = [opis, url].filter(Boolean).join(' ');
   const { dodane } = Magazyn.dodaj([{
     url: url || null,
-    tytul: opis || url,
+    // „Streścić” itp. to oznaczenie, nie tytuł – wtedy tytułem jest adres,
+    // a prawdziwy tytuł i autor pobiorą się w tle (opisy.js).
+    tytul: url && Import.tylkoOznaczenia(opis) ? url : (opis || url),
     tekst,
     zrodlo,
     sugestia: Import.sugerujStatus(opis),

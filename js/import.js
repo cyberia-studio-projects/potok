@@ -196,6 +196,16 @@ const Import = {
   },
 
   /**
+   * Czy tekst to same oznaczenia („Streścić”, „(Zgłębić)”, „XDDD”, „-dom”…),
+   * a nie Twój opis. Wtedy przy dodawaniu tytuł pobierze się z internetu.
+   */
+  tylkoOznaczenia(tekst) {
+    const slowa = (tekst || '').toLowerCase().replace(/ł/g, 'l').normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .split(/[^a-z0-9]+/).filter(Boolean);
+    return slowa.every(s => /^(strescic|obczaic?|zglebic|przeczytac|obejrzec|poeksplorowac|zapoznac|zapisac|do|w|na|obsidian|obsidiana|muzyczka|muzyczki|muzyka|smieszne|x+d+|dom|prywatne|claude|dla|zadanie)$/.test(s));
+  },
+
+  /**
    * Podpowiedź 🏠: oznaczenia „(Dom)”, „(Claude-dom)”, „-dom”, „prywatne”.
    */
   sugerujPrywatne(tekst) {

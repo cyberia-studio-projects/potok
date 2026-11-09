@@ -1,5 +1,8 @@
 # Potok – postęp prac i decyzje
 
+## 9.11.2026 – tytuły także przy dodawaniu na komputerze
+- Gdy w „Dodaj” wpiszesz link i opis składający się z samych oznaczeń („Streścić”, „(Zgłębić)”, „XD”…), tytułem jest adres. Potem w tle pobiera się prawdziwy tytuł i autor, a podpowiedź statusu zostaje. Własny opis („Streścić – wywiad z…”) zostaje tytułem. Funkcja `Import.tylkoOznaczenia`; testy w testy.js i e2e-drive.js (krok 9).
+
 ## 9.11.2026 – „Streszczone” jednym kliknięciem
 - Po pobraniu pliku / skopiowaniu adresów Potok pamięta (na tym urządzeniu), które wpisy wysłano do NotebookLM. W Pliki → Kolejka „Streścić” pojawia się przycisk „Streszczone – przenieś N wysłanych do Archiwum”, z potwierdzeniem i „Cofnij”.
 - Przenosi tylko te wysłane, które dalej są w „Streścić”: przesunięte wcześniej do „Zgłębić” i dodane po wysłaniu zostają. Test 8c w e2e.js.

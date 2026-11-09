@@ -340,6 +340,12 @@ test('opisy: pobieramy tylko dla tytułów „z automatu”, raz', () => {
   prawda(!Opisy.potrzebuje({ url: 'file:///C:/x.pdf', tytul: 'plik: x.pdf' }), 'pliki z dysku – nie');
   prawda(!Opisy.potrzebuje({ url: null, tytul: 'notatka' }), 'bez linku – nie');
 });
+test('opisy: dopisane „Streścić” itp. nie blokuje pobrania tytułu, Twój opis tak', () => {
+  for (const t of ['Streścić', '(Streścić)', '[Zgłębić]', 'obczaić', 'XDDDD', 'Zapisać do Obsidian', 'muzyczka -dom', ''])
+    prawda(Import.tylkoOznaczenia(t), t);
+  for (const t of ['Streścić – wywiad z Karpathym', 'fajny przepis', 'Claude: zrób z tego notatkę o AI'])
+    prawda(!Import.tylkoOznaczenia(t), t);
+});
 test('opisy: tytuł i autor zapisane, tekst i „zmieniono” bez zmian', () => {
   czysto();
   Magazyn.dodaj([{ url: 'https://youtu.be/xyz', tytul: 'https://youtu.be/xyz', tekst: 'XDDD https://youtu.be/xyz' }]);
