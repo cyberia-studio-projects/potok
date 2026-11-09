@@ -38,6 +38,7 @@ function nowyGoogle() {
     blokady: () => blokady,
     // Udawany internet dla akcji „opis”: adres → { kod, tekst }.
     strony: {},
+    Logger: { log: () => {} },
     UrlFetchApp: { fetch: url => { const st = g.strony[url]; if (!st) throw new Error('brak sieci'); return { getResponseCode: () => st.kod || 200, getContentText: () => st.tekst }; } },
   };
   vm.runInNewContext(kod.replace("'WSTAW_KLUCZ'", "'tajny'"), g);
@@ -79,10 +80,18 @@ assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https:/
 g.strony['https://www.facebook.com/reel/1'] = { tekst: '<meta property="og:title" content="Facebook"><title>Facebook</title>' };
 assert.strictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://www.facebook.com/reel/1' }).tytul, '');
 // Błąd sieci, 404, zły adres, zły klucz – bez wywrotki.
-assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://nie-ma.example' }), { tytul: '' });
+assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://nie-ma.example' }), { tytul: '', problem: 'brak sieci' });
 g.strony['https://example.com/404'] = { kod: 404, tekst: '' };
-assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://example.com/404' }), { tytul: '' });
+assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://example.com/404' }), { tytul: '', problem: 'strona: kod 404' });
+// Brak zgody Google na łączenie ze stronami – błąd widoczny, a nie cichy pusty tytuł.
+const strony = g.strony; g.strony = new Proxy({}, { get: () => { throw new Error('Nie masz uprawnień do wywołania UrlFetchApp.fetch'); } });
+assert.match(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://danluu.com/ambitious' }).problem, /uprawnień/);
+g.strony = strony;
+assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'wersja' }), { wersja: 3 });
+assert.deepStrictEqual(zapytaj(g, { klucz: 'zly', akcja: 'wersja' }), { blad: 'zły klucz' });
+g.strony['https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent('https://www.youtube.com/watch?v=jNQXAC9IVRw')] = { tekst: JSON.stringify({ title: 'Me at the zoo', author_name: 'jawed' }) };
+assert.strictEqual(g.sprawdzTytuly().tytul, 'Me at the zoo');
 assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'file:///C:/x' }), { blad: 'zły adres' });
 assert.deepStrictEqual(zapytaj(g, { klucz: 'zly', akcja: 'opis', url: yt }), { blad: 'zły klucz' });
-assert.strictEqual(JSON.parse(g.doGet().tekst).wersja, 2);
+assert.strictEqual(JSON.parse(g.doGet().tekst).wersja, 3);
 console.log('Skrypt Google: OK (klucz, tworzenie pliku, zapis/odczyt, polskie znaki, blokada, tytuły linków)');

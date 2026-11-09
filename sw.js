@@ -1,6 +1,6 @@
 /* sw.js – service worker: zapamiętuje pliki aplikacji, żeby działała offline.
    Przy każdej zmianie plików podbij WERSJA – wtedy telefon pobierze nowe. */
-const WERSJA = 'potok-v19';
+const WERSJA = 'potok-v20';
 const PLIKI = ['./', 'index.html', 'styl.css', 'manifest.webmanifest', 'ikona.svg',
   'js/magazyn.js', 'js/zip.js', 'js/import.js', 'js/eksport.js', 'js/skrypt-google.js', 'js/synchronizacja.js', 'js/opisy.js', 'js/app.js'];
 

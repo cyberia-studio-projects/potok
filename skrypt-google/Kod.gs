@@ -4,16 +4,19 @@
    Co robi: trzyma wszystkie wpisy w pliku „Potok.json” w folderze „Potok”
    na Twoim Drive. Odpowiada tylko na zapytania z właściwym kluczem.
    Nie rusza żadnych innych plików. Kod jest krótki – możesz go przeczytać.
-   Od wersji 2 umie też odczytać tytuł i autora linku (np. filmu z YouTube). */
+   Od wersji 2 umie też odczytać tytuł i autora linku (np. filmu z YouTube).
+   Wersja 3: mówi, co poszło nie tak przy tytule, i ma funkcję sprawdzTytuly
+   do uruchomienia w edytorze (daje skryptowi zgodę na łączenie ze stronami). */
 
 const KLUCZ = 'WSTAW_KLUCZ';   // aplikacja wstawia tu Twój tajny klucz
-const WERSJA_SKRYPTU = 2;
+const WERSJA_SKRYPTU = 3;
 
-/** Zapytanie z aplikacji: { klucz, akcja: 'pobierz' | 'zapisz' | 'opis', tresc?, url? } */
+/** Zapytanie z aplikacji: { klucz, akcja: 'pobierz' | 'zapisz' | 'opis' | 'wersja', tresc?, url? } */
 function doPost(e) {
   let dane;
   try { dane = JSON.parse(e.postData.contents); } catch (x) { return wynik({ blad: 'złe dane' }); }
   if (dane.klucz !== KLUCZ) return wynik({ blad: 'zły klucz' });
+  if (dane.akcja === 'wersja') return wynik({ wersja: WERSJA_SKRYPTU });
   if (dane.akcja === 'opis') return wynik(opisStrony(dane.url));
 
   // Blokada: dwa urządzenia naraz nie nadpiszą sobie pliku w połowie zapisu.
@@ -43,12 +46,12 @@ function opisStrony(url) {
   try {
     if (/(^|\.)(youtube\.com|youtu\.be)$/.test(host)) {
       const odp = UrlFetchApp.fetch('https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(url), { muteHttpExceptions: true });
-      if (odp.getResponseCode() !== 200) return { tytul: '' };
+      if (odp.getResponseCode() !== 200) return { tytul: '', problem: 'YouTube: kod ' + odp.getResponseCode() };
       const o = JSON.parse(odp.getContentText());
       return { tytul: o.title || '', autor: o.author_name || '' };
     }
     const odp = UrlFetchApp.fetch(url, { muteHttpExceptions: true, followRedirects: true, headers: { 'Accept-Language': 'pl,en' } });
-    if (odp.getResponseCode() !== 200) return { tytul: '' };
+    if (odp.getResponseCode() !== 200) return { tytul: '', problem: 'strona: kod ' + odp.getResponseCode() };
     const html = odp.getContentText().slice(0, 300000);
     const meta = nazwa => {
       const znacznik = (html.match(new RegExp('<meta[^>]+(?:property|name)=["\']' + nazwa + '["\'][^>]*>', 'i')) || [])[0] || '';
@@ -59,8 +62,17 @@ function opisStrony(url) {
     if (/^(facebook|instagram|log in|zaloguj się|log into facebook)/i.test(tytul)) tytul = '';
     return { tytul: tytul.trim(), autor: (meta('author') || meta('og:site_name')).trim() };
   } catch (x) {
-    return { tytul: '' };
+    return { tytul: '', problem: String(x && x.message || x) };
   }
+}
+
+/** Uruchom raz w edytorze (wybierz u góry „sprawdzTytuly” → Uruchom):
+    Google zapyta o zgodę na łączenie ze stronami, a w dzienniku
+    pojawi się tytuł przykładowego filmu – znak, że wszystko działa. */
+function sprawdzTytuly() {
+  const o = opisStrony('https://www.youtube.com/watch?v=jNQXAC9IVRw');
+  Logger.log(JSON.stringify(o));
+  return o;
 }
 
 /** &amp; &quot; &#39; &#x105; itp. → zwykłe znaki. */

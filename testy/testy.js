@@ -337,8 +337,9 @@ test('opisy: pobieramy tylko dla tytułów „z automatu”, raz', () => {
   prawda(Opisy.potrzebuje({ url: yt, tytul: Import.tytulZAdresu(yt) }), '„YouTube · id”');
   prawda(!Opisy.potrzebuje({ url: yt, tytul: 'Mój własny opis' }), 'Twój opis zostaje');
   prawda(Opisy.potrzebuje({ url: yt, tytul: 'Streścić' }), 'samo oznaczenie jako tytuł (stare wpisy)');
-  prawda(!Opisy.potrzebuje({ url: yt, tytul: yt, opisPobrany: 'brak-2' }), 'nie pytamy w kółko');
+  prawda(!Opisy.potrzebuje({ url: yt, tytul: yt, opisPobrany: 'brak-3' }), 'nie pytamy w kółko');
   prawda(Opisy.potrzebuje({ url: yt, tytul: yt, opisPobrany: 'brak' }), 'stara nieudana próba – jeszcze raz');
+  prawda(Opisy.potrzebuje({ url: yt, tytul: yt, opisPobrany: 'brak-2' }), 'próba skryptu w wersji 2 – jeszcze raz');
   prawda(!Opisy.potrzebuje({ url: 'file:///C:/x.pdf', tytul: 'plik: x.pdf' }), 'pliki z dysku – nie');
   prawda(!Opisy.potrzebuje({ url: null, tytul: 'notatka' }), 'bez linku – nie');
 });
@@ -370,7 +371,7 @@ test('opisy: tytuł i autor zapisane, tekst i „zmieniono” bez zmian', () => 
   const fb = Magazyn.wczytaj().find(x => x.url.includes('facebook'));
   Magazyn.ustawOpis(fb.id, { tytul: '' });
   const fbPo = Magazyn.wczytaj().find(x => x.id === fb.id);
-  rowne([fbPo.tytul, fbPo.opisPobrany], ['Facebook – rolka', 'brak-2']);
+  rowne([fbPo.tytul, fbPo.opisPobrany], ['Facebook – rolka', 'brak-3']);
 });
 test('scal: tytuł pobrany na jednym urządzeniu nie ginie przez decyzję z drugiego', () => {
   const zTytulem = wpis('a', '2026-11-09T10:00:00Z', { tytul: 'Piosenka', autor: 'Kanał', opisPobrany: '2026-11-09T12:00:00Z' });

@@ -8,9 +8,10 @@
 const Opisy = {
   /** Czy wpis ma tytuł „z automatu” (sam adres albo „YouTube · id”) – wtedy warto pobrać prawdziwy. */
   potrzebuje(w) {
-    // 'brak' (bez „-2”) to nieudana próba sprzed wersji 18 – wtedy linki z miksów
-    // YouTube („&list=RD…”) nie dawały tytułu. Próbujemy je jeszcze raz.
-    if (!w.url || !/^https?:\/\//i.test(w.url) || (w.opisPobrany && w.opisPobrany !== 'brak')) return false;
+    // 'brak' i 'brak-2' to nieudane próby starszego skryptu (np. bez zgody Google
+    // na łączenie ze stronami) – ze skryptem w wersji 3 próbujemy jeszcze raz.
+    // 'brak-3' = skrypt w wersji 3 też nie dał rady – nie pytamy w kółko.
+    if (!w.url || !/^https?:\/\//i.test(w.url) || (w.opisPobrany && !['brak', 'brak-2'].includes(w.opisPobrany))) return false;
     // „Streścić” jako tytuł – wpisy dodane przed wersją 16 też się poprawią.
     return !w.tytul || w.tytul === w.url || w.tytul === Import.tytulZAdresu(w.url) || Import.tylkoOznaczenia(w.tytul);
   },
@@ -39,7 +40,7 @@ const Opisy = {
   podsumowanie(wpisy) {
     const linki = wpisy.filter(w => w.url && /^https?:/i.test(w.url));
     const ile = f => linki.filter(f).length;
-    const tekst = `Tytuły linków: pobrane ${ile(w => w.opisPobrany && !/^brak/.test(w.opisPobrany))} · bez tytułu ${ile(w => w.opisPobrany === 'brak-2')} · czekają ${ile(w => this.potrzebuje(w))}.`;
+    const tekst = `Tytuły linków: pobrane ${ile(w => w.opisPobrany && !/^brak/.test(w.opisPobrany))} · bez tytułu ${ile(w => w.opisPobrany === 'brak-3')} · czekają ${ile(w => this.potrzebuje(w))}.`;
     const b = this.ostatniBlad;
     return tekst + (b ? ` Ostatni problem (${b.kiedy.toLocaleTimeString('pl-PL')}): ${b.url} – ${b.tresc}` : '');
   },
@@ -53,6 +54,25 @@ const Opisy = {
   async uzupelnij() {
     if (this.trwa || !navigator.onLine || !Synchronizacja.skrypt()) return;
     this.trwa = true;
+    // Raz na uruchomienie: czy skrypt jest w wersji 3 (stary nie zna akcji „wersja”).
+    if (!this.wersjaSprawdzona) {
+      try {
+        await Synchronizacja.doSkryptu({ akcja: 'wersja' });
+        this.wersjaSprawdzona = true;
+        if (this.skryptStary()) {
+          localStorage.removeItem(Magazyn.klucz + '.skryptStary');
+          window.dispatchEvent(new Event('potok-stan-synchronizacji'));
+        }
+      } catch (e) {
+        if (/nieznana akcja/.test(e.message)) {
+          this.wersjaSprawdzona = true;
+          localStorage.setItem(Magazyn.klucz + '.skryptStary', '1');
+          window.dispatchEvent(new Event('potok-stan-synchronizacji'));
+        }
+        this.trwa = false;
+        return;   // stary skrypt albo brak sieci – tytułów nie pobieramy
+      }
+    } else if (this.skryptStary()) { this.trwa = false; return; }
     const pominiete = new Set();   // linki, które w tym przebiegu nie odpowiedziały
     let bezOdpowiedziPodRzad = 0;
     try {
@@ -84,6 +104,7 @@ const Opisy = {
           opis = null;   // błąd tylko dla tego linku – nie blokuje pozostałych
         }
         bezOdpowiedziPodRzad = opis === null ? bezOdpowiedziPodRzad : 0;
+        if (opis && opis.problem) this.ostatniBlad = { url: w.url, tresc: opis.problem, kiedy: new Date() };
         if (this.skryptStary()) {
           localStorage.removeItem(Magazyn.klucz + '.skryptStary');
           window.dispatchEvent(new Event('potok-stan-synchronizacji'));

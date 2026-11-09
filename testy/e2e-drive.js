@@ -34,6 +34,7 @@ async function obsluzSkrypt(route) {
   if (dane.akcja === 'pobierz') return odp({ tresc: drive.skrypt || '{"wersja":1,"wpisy":[]}' });
   if (dane.akcja === 'zapisz') { drive.skrypt = dane.tresc; drive.zapisy++; return odp({ ok: true }); }
   // Akcja „opis” jest od wersji 2 skryptu; stary skrypt jej nie zna.
+  if (dane.akcja === 'wersja' && drive.wersjaSkryptu >= 3) return odp({ wersja: drive.wersjaSkryptu });
   if (dane.akcja === 'opis' && drive.wersjaSkryptu >= 2) {
     // Jak prawdziwy YouTube: link z miksu („&list=RD…”) – bez tytułu.
     if (/youtube\.com.*[?&]list=/.test(dane.url)) return odp({ tytul: '' });
@@ -218,8 +219,8 @@ async function scenariusz(przegladarka, tryb) {
     await komp.s.waitForSelector('#skrypt-aktualizacja', { state: 'visible', timeout: 10000 });
     await komp.s.click('#pokaz-nowy-skrypt');
     const nowy = await komp.s.inputValue('#nowy-skrypt-tekst');
-    assert(nowy.includes("const KLUCZ = 'TAJNY-KLUCZ'") && nowy.includes('WERSJA_SKRYPTU = 2'), 'nowy skrypt bez klucza lub wersji');
-    drive.wersjaSkryptu = 2;   // „wdrożono nową wersję”
+    assert(nowy.includes("const KLUCZ = 'TAJNY-KLUCZ'") && nowy.includes('WERSJA_SKRYPTU = 3') && nowy.includes('function sprawdzTytuly'), 'nowy skrypt bez klucza lub wersji');
+    drive.wersjaSkryptu = 3;   // „wdrożono nową wersję”
     await komp.s.click('#sync-teraz');
     await komp.s.waitForFunction(() => Magazyn.wczytaj().find(w => w.url === 'https://example.com/z-komputera').autor === 'Autor testowy', null, { timeout: 15000 });
     // Na komputerze: link z YouTube + dopisane „Streścić” → tytuł i autor też się pobierają, podpowiedź zostaje.
@@ -232,7 +233,7 @@ async function scenariusz(przegladarka, tryb) {
     await komp.s.waitForFunction(() => Magazyn.wczytaj().find(x => (x.url || '').includes('miks456')).tytul === 'Tytuł: https://www.youtube.com/watch?v=miks456', null, { timeout: 15000 });
     // Link bez odpowiedzi po 2 próbach: „bez tytułu”, a w Pliki widać, co poszło nie tak.
     await komp.s.click('#stan-sync');
-    await komp.s.waitForFunction(() => Magazyn.wczytaj().find(x => x.url === 'https://example.com/wolny').opisPobrany === 'brak-2', null, { timeout: 15000 });
+    await komp.s.waitForFunction(() => Magazyn.wczytaj().find(x => x.url === 'https://example.com/wolny').opisPobrany === 'brak-3', null, { timeout: 15000 });
     await komp.s.click('nav [data-widok=eksport]');
     assert.match(await komp.s.textContent('#stan-opisow'), /bez tytułu [1-9].*Ostatni problem.*example\.com\/wolny/);
     await komp.s.click('nav [data-widok=dodaj]');

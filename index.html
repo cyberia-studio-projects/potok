@@ -119,7 +119,7 @@
           <p id="stan-opisow" class="pomoc"></p>
           <!-- Pokazywane, gdy skrypt Google jest starszy niż aplikacja (nie umie pobierać tytułów). -->
           <div id="skrypt-aktualizacja" class="ramka" hidden>
-            <p><b>Zaktualizuj skrypt Google</b>, żeby Potok pokazywał tytuły i autorów linków (np. z YouTube). Adres i klucz zostają te same, raz na kilka minut.</p>
+            <p><b>Zaktualizuj skrypt Google</b>, żeby Potok pokazywał tytuły i autorów linków (np. z YouTube). Adres i klucz zostają te same, kilka minut, raz.</p>
             <ol class="kroki">
               <li><button id="pokaz-nowy-skrypt">Pokaż nowy skrypt</button>
                 <div id="nowy-skrypt-pole" hidden>
@@ -127,7 +127,8 @@
                   <button id="kopiuj-nowy-skrypt">Kopiuj skrypt</button>
                 </div></li>
               <li>Otwórz <a href="https://script.google.com/home" target="_blank" rel="noopener">script.google.com</a> i swój projekt ze skryptem Potoku. Zaznacz cały stary kod (Ctrl+A), wklej nowy, zapisz (Ctrl+S).</li>
-              <li><b>Wdróż → Zarządzaj wdrożeniami</b> → ✏️ (ołówek) → „Wersja”: <b>Nowa wersja</b> → <b>Wdróż</b>. Google zapyta o nowe uprawnienie („łączenie z usługą zewnętrzną” – to pobieranie tytułów). Zezwól tak jak za pierwszym razem.</li>
+              <li>U góry edytora, obok przycisku <b>Uruchom</b>, wybierz z listy funkcję <b>sprawdzTytuly</b> i kliknij <b>Uruchom</b>. Google poprosi o uprawnienia: <b>Przejrzyj uprawnienia</b> → Twoje konto → Zaawansowane → Przejdź do… → <b>Zezwól</b>. Na dole w „Dzienniku wykonania” powinien pojawić się tytuł „Me at the zoo” – znak, że działa.</li>
+              <li><b>Wdróż → Zarządzaj wdrożeniami</b> → ✏️ (ołówek) → „Wersja”: <b>Nowa wersja</b> → <b>Wdróż</b>.</li>
               <li>Wróć tutaj i kliknij <b>Synchronizuj teraz</b>. Ta ramka zniknie, a tytuły będą się uzupełniać w tle.</li>
             </ol>
           </div>

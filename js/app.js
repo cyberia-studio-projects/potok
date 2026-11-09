@@ -24,7 +24,7 @@ function esc(t) {
 }
 
 // Numer wersji aplikacji – podbijaj razem z WERSJA w sw.js.
-const WERSJA_APLIKACJI = 19;
+const WERSJA_APLIKACJI = 20;
 
 // Krótki komunikat na dole ekranu.
 function komunikat(tekst) {
@@ -397,7 +397,8 @@ document.addEventListener('DOMContentLoaded', () => {
     for (const k of ['.skrypt', '.drive', '.token', '.plikId']) localStorage.removeItem(Magazyn.klucz + k);
     Synchronizacja.ustawStan('niepolaczone');
   };
-  $('#sync-teraz').onclick = kliknijSync;
+  // „Synchronizuj teraz” sprawdza też na nowo wersję skryptu (np. po jego aktualizacji).
+  $('#sync-teraz').onclick = () => { Opisy.wersjaSprawdzona = false; kliknijSync(); };
   window.addEventListener('potok-stan-synchronizacji', pokazStanSync);
   // Po pobraniu zmian z innego urządzenia – odśwież to, co widać (poza formularzem).
   window.addEventListener('potok-odswiez', () => { if (aktualnyWidok !== 'dodaj') pokazWidok(aktualnyWidok); });

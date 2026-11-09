@@ -1,5 +1,10 @@
 # Potok – postęp prac i decyzje
 
+## 9.11.2026 – skrypt Google wersja 3 (wersja aplikacji 20)
+- Objaw: „pobrane 0 · bez tytułu 25”, bez żadnego błędu. Skrypt v2 połykał każdy błąd pobierania i zwracał pusty tytuł. Najpewniej Google nie dał mu zgody na łączenie ze stronami (UrlFetchApp), bo przy „Nowej wersji” wdrożenia nie zawsze pyta o nowe uprawnienia.
+- Skrypt v3: zwraca `problem` (np. brak uprawnień, kod HTTP), ma akcję `wersja` i funkcję `sprawdzTytuly` do uruchomienia w edytorze (wymusza zgodę Google, w dzienniku pokazuje tytuł „Me at the zoo”).
+- Aplikacja: raz na uruchomienie (i po „Synchronizuj teraz”) sprawdza wersję skryptu. Przy starszej pokazuje ramkę aktualizacji (5 kroków) i nie pobiera tytułów. Z v3 ponawia nieudane próby v2 (`brak`, `brak-2`). Nowe nieudane mają `brak-3`, a problem widać w Pliki.
+
 ## 9.11.2026 – jeden „wolny” link blokował wszystkie tytuły (wersja 19)
 - Objaw: po wersji 18 dalej żadnych tytułów, nawet danluu.com. Przyczyna (odtworzona w teście): gdy skrypt Google nie odpowie dla jakiegoś linku (np. przekroczy czas na wolnej stronie), przeglądarka zgłasza błąd sieci. Potok uznawał wtedy „brak internetu” i za każdym razem stawał na tym samym linku.
 - Teraz taki link jest pomijany, po 2 próbach dostaje „bez tytułu”, a 3 takie błędy pod rząd = przerwa (raczej sieć). W Pliki → Google Drive jest linijka „Tytuły linków: pobrane · bez tytułu · czekają” i ostatni problem.
