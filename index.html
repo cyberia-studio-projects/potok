@@ -13,7 +13,11 @@
 </head>
 <body>
   <header>
-    <h1>Potok <small id="znak-urzadzenia"></small></h1>
+    <div class="naglowek-gora">
+      <h1>Potok <small id="znak-urzadzenia"></small></h1>
+      <!-- Stan synchronizacji z Google Drive; kliknięcie = synchronizuj / zaloguj -->
+      <button id="stan-sync" class="stan-sync" hidden></button>
+    </div>
     <nav>
       <button data-widok="przeglad">Przegląd</button>
       <button data-widok="listy">Listy</button>
@@ -75,6 +79,14 @@
       </div>
 
       <div class="karta">
+        <h2>Google Drive</h2>
+        <p class="pomoc">Wszystkie wpisy są zapisywane w pliku <b>Potok/Potok.json</b> na Twoim Google Drive. Aplikacja widzi tylko pliki, które sama utworzyła. Bez internetu zmiany czekają i wyślą się same, gdy sieć wróci.</p>
+        <p id="opis-sync" class="wynik"></p>
+        <button id="polacz-drive">Połącz z Google Drive</button>
+        <button id="sync-teraz">Synchronizuj teraz</button>
+      </div>
+
+      <div class="karta">
         <h2>To urządzenie</h2>
         <p class="pomoc">Na komputerze służbowym wpisy oznaczone 🏠 „Tylko prywatnie” są widoczne, ale ich link się nie otwiera.</p>
         <button data-urzadzenie="prywatne">🏠 Mój prywatny komputer / telefon</button>
@@ -99,6 +111,9 @@
   <script src="js/zip.js"></script>
   <script src="js/import.js"></script>
   <script src="js/eksport.js"></script>
+  <script src="js/synchronizacja.js"></script>
+  <!-- Logowanie Google (tylko do synchronizacji; bez internetu aplikacja działa dalej) -->
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="js/app.js"></script>
 </body>
 </html>

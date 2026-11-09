@@ -28,6 +28,7 @@ jobs:
       - run: npx playwright install --with-deps chromium
       - run: node testy/uruchom-testy.js
       - run: node testy/e2e.js
+      - run: node testy/e2e-drive.js
 
   strona:
     needs: testy

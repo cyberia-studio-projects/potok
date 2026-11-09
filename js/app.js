@@ -255,13 +255,38 @@ function dodajRecznie(url, opis, zrodlo) {
 
 /* ------------------------ Nawigacja ------------------------------- */
 
+let aktualnyWidok = 'przeglad';
+
 function pokazWidok(nazwa) {
+  aktualnyWidok = nazwa;
   document.querySelectorAll('.widok').forEach(w => (w.hidden = w.id !== 'widok-' + nazwa));
   document.querySelectorAll('nav button').forEach(b => b.classList.toggle('aktywny', b.dataset.widok === nazwa));
   if (nazwa === 'przeglad') pokazPrzeglad();
   if (nazwa === 'listy') pokazListy();
   if (nazwa === 'zadania') pokazZadania();
   if (nazwa === 'eksport') pokazStanEksportu();
+}
+
+/* --------------------- Google Drive (☁) ---------------------------- */
+
+function pokazStanSync() {
+  const el = $('#stan-sync');
+  const tekst = Synchronizacja.opisStanu();
+  el.hidden = !tekst;
+  el.textContent = tekst;
+  el.className = 'stan-sync ' + Synchronizacja.stan;
+  el.title = Synchronizacja.blad || '';
+  $('#opis-sync').textContent = !Synchronizacja.dostepne()
+    ? 'Synchronizacja nie jest jeszcze skonfigurowana (brak Client ID).'
+    : Synchronizacja.polaczone() ? 'Połączono. ' + tekst.replace('☁ ', 'Stan: ') : 'Nie połączono.';
+  $('#polacz-drive').hidden = !Synchronizacja.dostepne() || Synchronizacja.polaczone() && !!Synchronizacja.token();
+  $('#sync-teraz').hidden = !Synchronizacja.polaczone();
+}
+
+// Kliknięcie w ☁: zaloguj (jeśli trzeba) albo synchronizuj od razu.
+function kliknijSync() {
+  if (!Synchronizacja.token()) Synchronizacja.zaloguj();
+  else Synchronizacja.synchronizuj();
 }
 
 function pokazUrzadzenie() {
@@ -293,6 +318,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 
   $('#szukaj').oninput = pokazListy;
+
+  // Synchronizacja z Google Drive.
+  $('#stan-sync').onclick = kliknijSync;
+  $('#polacz-drive').onclick = () => Synchronizacja.zaloguj();
+  $('#sync-teraz').onclick = kliknijSync;
+  window.addEventListener('potok-stan-synchronizacji', pokazStanSync);
+  // Po pobraniu zmian z innego urządzenia – odśwież to, co widać (poza formularzem).
+  window.addEventListener('potok-odswiez', () => { if (aktualnyWidok !== 'dodaj') pokazWidok(aktualnyWidok); });
 
   document.querySelectorAll('[data-urzadzenie]').forEach(b => b.onclick = () => {
     Magazyn.ustawUrzadzenie(b.dataset.urzadzenie);
@@ -376,4 +409,6 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   pokazWidok(Magazyn.wczytaj().length ? 'przeglad' : 'eksport');
+  Synchronizacja.start();
+  pokazStanSync();
 });

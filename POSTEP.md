@@ -1,5 +1,14 @@
 # Potok – postęp prac i decyzje
 
+## 9.11.2026 – synchronizacja z Google Drive (krok 2b, w toku)
+- **Gotowe w kodzie** (`js/synchronizacja.js`). Włączy się po wpisaniu Client ID z Google Cloud w `window.USTAWIENIA.googleClientId`. Bez niego znaczek ☁ jest ukryty i aplikacja działa jak dotąd.
+- Dane: folder **Potok** → plik **Potok.json** na Twoim Drive. Uprawnienie `drive.file`, więc aplikacja widzi tylko pliki, które sama utworzyła.
+- Łączenie urządzeń: wpis z jednej strony zostaje zawsze, przy konflikcie wygrywa nowsza zmiana (pole `zmieniono`), a historie z obu stron są sklejane. Nic nie ginie, data dodania się nie zmienia.
+- Automatycznie: przy otwarciu, 1,5 s po każdej zmianie, po powrocie internetu i po powrocie do karty. Bez internetu zmiany czekają w kolejce („do wysłania”).
+- Znaczek **☁** u góry pokazuje stan: zapisane HH:MM / czeka na wysłanie / bez internetu – wyślę później / kliknij, aby zsynchronizować (sesja Google trwa ok. 1 h, potem jedno kliknięcie).
+- Testy: 48 w przeglądarce + `testy/e2e-drive.js` – dwa urządzenia na udawanym Drive, decyzja bez internetu, powrót sieci, równoczesne dodanie, wygasła sesja.
+- Google Cloud wymaga weryfikacji dwuetapowej. Można ją włączyć kluczem dostępu (Windows Hello), bez numeru telefonu.
+
 ## 9.11.2026 – Potok pod adresem https (krok 2a)
 - Adres: **https://cyberia-studio-projects.github.io/potok/** (repozytorium: github.com/cyberia-studio-projects/potok, publiczne – tylko kod).
 - Do repozytorium NIE trafiają: Twoje pliki .docx, zrzuty ekranu, kopie .json (plik `.gitignore`). Testy używają zmyślonego `testy/przyklad.docx`.

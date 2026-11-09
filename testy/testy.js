@@ -276,6 +276,59 @@ test('urządzenie: domyślnie prywatne, ustawienie się zapamiętuje', () => {
   localStorage.removeItem(Magazyn.klucz + '.urzadzenie');
 });
 
+/* ---------------- Synchronizacja: łączenie danych ---------------- */
+
+const wpis = (id, zmieniono, dod = {}) => ({ id, url: 'https://' + id + '.pl', tytul: id, tekst: id,
+  status: 'skrzynka', dodano: '2026-11-01T10:00:00Z', zmieniono, historia: [], kolejnosc: 0, ...dod });
+
+test('scal: wpisy tylko po jednej stronie zostają (nic nie ginie)', () => {
+  const { wpisy } = Synchronizacja.scal([wpis('a', '2026-11-09T10:00:00Z')], [wpis('b', '2026-11-09T10:00:00Z')]);
+  rowne(wpisy.map(w => w.id).sort(), ['a', 'b']);
+});
+test('scal: przy konflikcie wygrywa nowsza zmiana – z obu stron', () => {
+  const lok = wpis('a', '2026-11-09T12:00:00Z', { status: 'zglebic' });
+  const zd = wpis('a', '2026-11-09T11:00:00Z', { status: 'obczaic' });
+  rowne(Synchronizacja.scal([lok], [zd]).wpisy[0].status, 'zglebic');
+  rowne(Synchronizacja.scal([{ ...lok, zmieniono: '2026-11-09T10:00:00Z' }], [zd]).wpisy[0].status, 'obczaic');
+});
+test('scal: historie zmian z obu urządzeń są sklejane bez powtórzeń', () => {
+  const h1 = { data: '2026-11-09T10:00:00Z', z: 'skrzynka', na: 'do_streszczenia' };
+  const h2 = { data: '2026-11-09T11:00:00Z', z: 'do_streszczenia', na: 'zglebic' };
+  const lok = wpis('a', '2026-11-09T11:00:00Z', { status: 'zglebic', historia: [h1, h2] });
+  const zd = wpis('a', '2026-11-09T10:00:00Z', { status: 'do_streszczenia', historia: [h1] });
+  rowne(Synchronizacja.scal([lok], [zd]).wpisy[0].historia, [h1, h2]);
+});
+test('scal: bez zmian → nie trzeba nic wysyłać; z nowym wpisem → trzeba', () => {
+  const a = wpis('a', '2026-11-09T10:00:00Z');
+  rowne(Synchronizacja.scal([a], [a]).inneNizZdalne, false);
+  rowne(Synchronizacja.scal([a, wpis('b', '2026-11-09T10:00:00Z')], [a]).inneNizZdalne, true);
+});
+test('scal: data dodania nigdy się nie zmienia', () => {
+  const lok = wpis('a', '2026-11-09T12:00:00Z', { dodano: '2026-10-01T08:00:00Z' });
+  const zd = wpis('a', '2026-11-09T11:00:00Z', { dodano: '2026-10-01T08:00:00Z' });
+  rowne(Synchronizacja.scal([lok], [zd]).wpisy[0].dodano, '2026-10-01T08:00:00Z');
+});
+test('kolejka: każda zmiana oznacza „do wysłania”, synchronizacja to czyści', () => {
+  czysto(); Magazyn.wyslano();
+  Magazyn.dodaj([{ url: 'https://a.pl', tytul: 'a', tekst: 'a' }]);
+  rowne(Magazyn.czekaNaWyslanie(), true);
+  Magazyn.wyslano();
+  Magazyn.zmienStatus(Magazyn.wczytaj()[0].id, 'obczaic');
+  rowne(Magazyn.czekaNaWyslanie(), true);
+  Magazyn.wyslano();
+  Magazyn.zapisz(Magazyn.wczytaj(), false);   // zapis danych z Drive
+  rowne(Magazyn.czekaNaWyslanie(), false);
+});
+test('zmiana wpisu ustawia czas „zmieniono” (do łączenia urządzeń)', () => {
+  czysto();
+  Magazyn.dodaj([{ url: 'https://a.pl', tytul: 'a', tekst: 'a' }]);
+  const w = Magazyn.wczytaj()[0];
+  const przed = w.zmieniono;
+  prawda(przed, 'brak „zmieniono” przy dodaniu');
+  Magazyn.ustawPrywatne(w.id, true);
+  prawda(Magazyn.wczytaj()[0].zmieniono >= przed);
+});
+
 /* ---------------- Eksport ---------------- */
 
 test('eksport: kolejka streszczeń = same adresy www, po jednym w linii', () => {

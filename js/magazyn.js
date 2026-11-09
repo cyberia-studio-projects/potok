@@ -23,6 +23,7 @@
      sugestia:  status zaproponowany z oznaczenia w tekście albo null
      kolejnosc: liczba – kolejność z dokumentu (do przeglądu)
      historia:  [{ data, z, na }]  każda zmiana statusu
+     zmieniono: "2026-11-09T…"    ostatnia zmiana wpisu – do łączenia danych z kilku urządzeń
      prywatne:  true/false        🏠 „otwierać tylko na prywatnym komputerze”;
                                   brak pola = podpowiedź z tekstu (Import.czyPrywatne)
    }
@@ -83,6 +84,7 @@ const Magazyn = {
         if (h && h.automatycznie && h.z === 'skrzynka' && h.na === w.status) {
           w.historia.push({ data: new Date().toISOString(), z: w.status, na: 'skrzynka', automatycznie: true });
           w.status = 'skrzynka';
+          w.zmieniono = new Date().toISOString();
           zmiany++;
         }
       }
@@ -115,9 +117,26 @@ const Magazyn = {
     return /[(\[]\s*claude/i.test(tekst || '') ? 'zrobic_claude' : null;
   },
 
-  /** Zapisuje całą tablicę wpisów. */
-  zapisz(wpisy) {
+  /**
+   * Zapisuje całą tablicę wpisów.
+   * Domyślnie oznacza też, że jest coś „do wysłania” na Google Drive
+   * i daje znać synchronizacji (zdarzenie „potok-zmiana”).
+   * Synchronizacja sama zapisuje dane pobrane z Drive z oznacz = false.
+   */
+  zapisz(wpisy, oznacz = true) {
     localStorage.setItem(this.klucz, JSON.stringify({ wersja: 1, wpisy }));
+    if (oznacz) {
+      localStorage.setItem(this.klucz + '.doWyslania', '1');
+      if (typeof window !== 'undefined') window.dispatchEvent(new Event('potok-zmiana'));
+    }
+  },
+
+  /** Czy są zmiany, których jeszcze nie ma na Google Drive. */
+  czekaNaWyslanie() {
+    return localStorage.getItem(this.klucz + '.doWyslania') === '1';
+  },
+  wyslano() {
+    localStorage.removeItem(this.klucz + '.doWyslania');
   },
 
   /** Tworzy nowy identyfikator. */
@@ -141,6 +160,7 @@ const Magazyn = {
         id: this.noweId(),
         status: 'skrzynka',
         dodano: new Date().toISOString(),   // data dodania – zawsze automatycznie
+        zmieniono: new Date().toISOString(),
         historia: [],
         kolejnosc: wpisy.length,
         ...n,
@@ -157,6 +177,7 @@ const Magazyn = {
     const w = wpisy.find(x => x.id === id);
     if (!w) return;
     w.prywatne = !!wartosc;
+    w.zmieniono = new Date().toISOString();
     this.zapisz(wpisy);
   },
 
@@ -178,6 +199,7 @@ const Magazyn = {
     const w = wpisy.find(x => x.id === id);
     if (!w || w.status === nowyStatus) return;
     w.historia.push({ data: new Date().toISOString(), z: w.status, na: nowyStatus });
+    w.zmieniono = new Date().toISOString();
     w.status = nowyStatus;
     this.zapisz(wpisy);
   },
