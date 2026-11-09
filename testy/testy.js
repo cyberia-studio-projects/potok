@@ -329,6 +329,41 @@ test('zmiana wpisu ustawia czas „zmieniono” (do łączenia urządzeń)', () 
   prawda(Magazyn.wczytaj()[0].zmieniono >= przed);
 });
 
+/* ---------------- Opisy: tytuł i autor gołych linków ---------------- */
+
+test('opisy: pobieramy tylko dla tytułów „z automatu”, raz', () => {
+  const yt = 'https://www.youtube.com/watch?v=abc123';
+  prawda(Opisy.potrzebuje({ url: yt, tytul: yt }), 'goły adres');
+  prawda(Opisy.potrzebuje({ url: yt, tytul: Import.tytulZAdresu(yt) }), '„YouTube · id”');
+  prawda(!Opisy.potrzebuje({ url: yt, tytul: 'Mój własny opis' }), 'Twój opis zostaje');
+  prawda(!Opisy.potrzebuje({ url: yt, tytul: yt, opisPobrany: 'brak' }), 'nie pytamy w kółko');
+  prawda(!Opisy.potrzebuje({ url: 'file:///C:/x.pdf', tytul: 'plik: x.pdf' }), 'pliki z dysku – nie');
+  prawda(!Opisy.potrzebuje({ url: null, tytul: 'notatka' }), 'bez linku – nie');
+});
+test('opisy: tytuł i autor zapisane, tekst i „zmieniono” bez zmian', () => {
+  czysto();
+  Magazyn.dodaj([{ url: 'https://youtu.be/xyz', tytul: 'https://youtu.be/xyz', tekst: 'XDDD https://youtu.be/xyz' }]);
+  const w = Magazyn.wczytaj()[0];
+  Magazyn.ustawOpis(w.id, { tytul: 'Piosenka', autor: 'Kanał' });
+  const po = Magazyn.wczytaj()[0];
+  rowne([po.tytul, po.autor, po.tekst, po.zmieniono], ['Piosenka', 'Kanał', 'XDDD https://youtu.be/xyz', w.zmieniono]);
+  prawda(po.opisPobrany);
+  // Brak tytułu (np. Facebook z logowaniem): tytuł zostaje, nie pytamy ponownie.
+  Magazyn.dodaj([{ url: 'https://facebook.com/reel/1', tytul: 'Facebook – rolka', tekst: 'https://facebook.com/reel/1' }]);
+  const fb = Magazyn.wczytaj().find(x => x.url.includes('facebook'));
+  Magazyn.ustawOpis(fb.id, { tytul: '' });
+  const fbPo = Magazyn.wczytaj().find(x => x.id === fb.id);
+  rowne([fbPo.tytul, fbPo.opisPobrany], ['Facebook – rolka', 'brak']);
+});
+test('scal: tytuł pobrany na jednym urządzeniu nie ginie przez decyzję z drugiego', () => {
+  const zTytulem = wpis('a', '2026-11-09T10:00:00Z', { tytul: 'Piosenka', autor: 'Kanał', opisPobrany: '2026-11-09T12:00:00Z' });
+  const zDecyzja = wpis('a', '2026-11-09T11:00:00Z', { status: 'muzyka' });
+  for (const [l, z] of [[zTytulem, zDecyzja], [zDecyzja, zTytulem]]) {
+    const w = Synchronizacja.scal([l], [z]).wpisy[0];
+    rowne([w.status, w.tytul, w.autor], ['muzyka', 'Piosenka', 'Kanał']);
+  }
+});
+
 /* ---------------- Eksport ---------------- */
 
 test('eksport: kolejka streszczeń = same adresy www, po jednym w linii', () => {

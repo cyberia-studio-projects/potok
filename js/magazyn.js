@@ -172,6 +172,20 @@ const Magazyn = {
   },
 
   /** Ustawia znaczek 🏠 „tylko prywatnie” (true/false). */
+  /**
+   * Tytuł i autor pobrane z internetu (Opisy). Bez zmiany „zmieniono”:
+   * to nie jest Twoja decyzja, więc nie może wygrać z decyzją z innego
+   * urządzenia przy scalaniu (scal przenosi opis osobno).
+   */
+  ustawOpis(id, opis) {
+    const wpisy = this.wczytaj();
+    const w = wpisy.find(x => x.id === id);
+    if (!w) return;
+    if (opis && opis.tytul) { w.tytul = opis.tytul; w.autor = opis.autor || ''; }
+    w.opisPobrany = opis && opis.tytul ? new Date().toISOString() : 'brak';
+    this.zapisz(wpisy);
+  },
+
   ustawPrywatne(id, wartosc) {
     const wpisy = this.wczytaj();
     const w = wpisy.find(x => x.id === id);

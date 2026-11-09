@@ -1,5 +1,13 @@
 # Potok – postęp prac i decyzje
 
+## 9.11.2026 – tytuł i autor linków (YouTube, strony, Facebook na ile się da)
+- Prośba: link udostępniony z YouTube zapisywał się jako goły adres. Tytuł i autor przyspieszają segregację.
+- Skrypt Google w wersji 2 ma akcję „opis”. Dla YouTube używa oficjalnego oEmbed, dla innych stron czyta og:title / <title>. Facebook zwykle wymaga logowania, więc tam tytuł bywa pusty.
+- Aplikacja (`js/opisy.js`) po każdej synchronizacji uzupełnia w tle wpisy z tytułem „z automatu” (goły adres, „YouTube · id”), jeden link naraz. Twoje własne opisy i oryginalny tekst się nie zmieniają. Pod tytułem widać autora, na karcie i na liście; wyszukiwarka szuka też po autorze.
+- Opis nie zmienia „zmieniono”, a scalanie przenosi go osobno, więc pobrany tytuł nie nadpisze decyzji z innego urządzenia.
+- Stary skrypt: Pliki → Google Drive pokazują ramkę „Zaktualizuj skrypt Google” z nowym skryptem (ten sam klucz) i 4 krokami (Zarządzaj wdrożeniami → Nowa wersja; adres się nie zmienia).
+- Testy: 3 nowe w testy.js, „opis” w test-skryptu.js (YouTube, og:title z apostrofami i encjami, Facebook-logowanie, 404, brak sieci), krok 9 w e2e-drive.js (stary skrypt → ramka; nowy → tytuł i autor, też na Drive).
+
 ## 9.11.2026 – poprawka „Udostępnij → Potok”
 - Błąd: udostępnienie z YouTube na Androidzie nic nie dodawało. Chrome przy share_target typu GET zastępuje parametry z adresu „action”, więc znikało nasze `udostepnij=1`.
 - Poprawka: udostępnienie rozpoznajemy po samych parametrach title/text/url. Nowy test e2e odtwarza adres taki, jak buduje go Chrome.

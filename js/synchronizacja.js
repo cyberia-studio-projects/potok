@@ -62,7 +62,12 @@ const Synchronizacja = {
     for (const l of lokalne) {
       const z = wynik.get(l.id);
       if (!z) { wynik.set(l.id, l); continue; }
-      const nowszy = this.czasZmiany(l) >= this.czasZmiany(z) ? l : z;
+      let nowszy = this.czasZmiany(l) >= this.czasZmiany(z) ? l : z;
+      // Tytuł pobrany z internetu na jednym urządzeniu nie ginie przez
+      // decyzję podjętą na drugim (opis nie zmienia „zmieniono”).
+      const starszy = nowszy === l ? z : l;
+      if (!nowszy.opisPobrany && starszy.opisPobrany)
+        nowszy = { ...nowszy, tytul: starszy.tytul, autor: starszy.autor, opisPobrany: starszy.opisPobrany };
       // Sklejenie historii (bez powtórzeń), posortowane po dacie.
       const widziane = new Set();
       const historia = [...(z.historia || []), ...(l.historia || [])]
@@ -262,6 +267,7 @@ const Synchronizacja = {
       this.ostatnio = new Date();
       this.ustawStan('zapisane');
       window.dispatchEvent(new Event('potok-odswiez'));   // ekran pokaże nowe dane
+      if (typeof Opisy !== 'undefined') Opisy.uzupelnij();              // tytuły gołych linków, w tle
     } catch (e) {
       console.error('Synchronizacja', e);
       if (e.zaloguj) this.ustawStan('zaloguj');

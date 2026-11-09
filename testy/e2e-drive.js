@@ -33,6 +33,8 @@ async function obsluzSkrypt(route) {
   if (dane.klucz !== 'TAJNY-KLUCZ') return odp({ blad: 'zły klucz' });
   if (dane.akcja === 'pobierz') return odp({ tresc: drive.skrypt || '{"wersja":1,"wpisy":[]}' });
   if (dane.akcja === 'zapisz') { drive.skrypt = dane.tresc; drive.zapisy++; return odp({ ok: true }); }
+  // Akcja „opis” jest od wersji 2 skryptu; stary skrypt jej nie zna.
+  if (dane.akcja === 'opis' && drive.wersjaSkryptu >= 2) return odp({ tytul: 'Tytuł: ' + dane.url, autor: 'Autor testowy' });
   return odp({ blad: 'nieznana akcja' });
 }
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' };
@@ -99,7 +101,7 @@ const czekajNa = (s, wzor) => s.waitForFunction(w => new RegExp(w).test(document
 const plikNaDrive = tryb => JSON.parse(tryb === 'skrypt' ? drive.skrypt : Object.values(drive.pliki).find(p => p.name === 'Potok.json').tresc);
 
 async function scenariusz(przegladarka, tryb) {
-  drive = { pliki: {}, licznik: 0, zapisy: 0, skrypt: '' };
+  drive = { pliki: {}, licznik: 0, zapisy: 0, skrypt: '', wersjaSkryptu: 1 };
   console.log(`--- Tryb: ${tryb === 'skrypt' ? 'skrypt Google' : 'Google Cloud'} ---`);
 
   // 0. Komputer: połączenie (w trybie skryptu – jak człowiek, przez ekran „Pliki”).
@@ -204,6 +206,26 @@ async function scenariusz(przegladarka, tryb) {
     assert(await tel.s.isVisible('#sync-konfiguracja'), 'po odłączeniu brak instrukcji');
     assert.strictEqual(await tel.s.evaluate(() => Magazyn.wczytaj().length), przed, 'odłączenie usunęło wpisy');
     console.log('7. Zły klucz: czytelny błąd. 8. Odłączenie: wpisy zostają.');
+
+    // 9. Tytuły linków: stary skrypt → Pliki proszą o aktualizację; nowy → tytuł i autor same się uzupełniają.
+    await komp.s.click('nav [data-widok=eksport]');
+    await komp.s.waitForSelector('#skrypt-aktualizacja', { state: 'visible', timeout: 10000 });
+    await komp.s.click('#pokaz-nowy-skrypt');
+    const nowy = await komp.s.inputValue('#nowy-skrypt-tekst');
+    assert(nowy.includes("const KLUCZ = 'TAJNY-KLUCZ'") && nowy.includes('WERSJA_SKRYPTU = 2'), 'nowy skrypt bez klucza lub wersji');
+    drive.wersjaSkryptu = 2;   // „wdrożono nową wersję”
+    await komp.s.click('#sync-teraz');
+    await komp.s.waitForFunction(() => Magazyn.wczytaj().find(w => w.url === 'https://example.com/z-komputera').autor === 'Autor testowy', null, { timeout: 15000 });
+    await komp.s.waitForSelector('#skrypt-aktualizacja', { state: 'hidden', timeout: 10000 });
+    await czekajWysylke(komp.s);
+    await komp.s.click('#stan-sync'); await czekajNa(komp.s, /zapisane/);
+    const naDysku = plikNaDrive('skrypt').wpisy.find(w => w.url === 'https://example.com/z-komputera');
+    assert.strictEqual(naDysku.tytul, 'Tytuł: https://example.com/z-komputera', 'tytuł nie trafił na Drive');
+    await komp.s.click('nav [data-widok=listy]');
+    await komp.s.click('#statusy [data-lista=skrzynka]');
+    await komp.s.fill('#szukaj', 'Autor testowy');
+    assert(await komp.s.locator('#lista .autor').count() > 0, 'autor nie widać na liście');
+    console.log('9. Tytuły: prośba o nowy skrypt, potem tytuł i autor same się uzupełniają (też na Drive).');
   }
 
   assert.deepStrictEqual([...komp.bledy, ...tel.bledy], [], 'błędy JavaScript na stronie');

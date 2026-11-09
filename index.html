@@ -105,6 +105,20 @@
         <!-- Po połączeniu -->
         <div id="sync-polaczone" hidden>
           <button id="sync-teraz">Synchronizuj teraz</button>
+          <!-- Pokazywane, gdy skrypt Google jest starszy niż aplikacja (nie umie pobierać tytułów). -->
+          <div id="skrypt-aktualizacja" class="ramka" hidden>
+            <p><b>Zaktualizuj skrypt Google</b>, żeby Potok pokazywał tytuły i autorów linków (np. z YouTube). Adres i klucz zostają te same, raz na kilka minut.</p>
+            <ol class="kroki">
+              <li><button id="pokaz-nowy-skrypt">Pokaż nowy skrypt</button>
+                <div id="nowy-skrypt-pole" hidden>
+                  <textarea id="nowy-skrypt-tekst" readonly rows="6"></textarea>
+                  <button id="kopiuj-nowy-skrypt">Kopiuj skrypt</button>
+                </div></li>
+              <li>Otwórz <a href="https://script.google.com/home" target="_blank" rel="noopener">script.google.com</a> i swój projekt ze skryptem Potoku. Zaznacz cały stary kod (Ctrl+A), wklej nowy, zapisz (Ctrl+S).</li>
+              <li><b>Wdróż → Zarządzaj wdrożeniami</b> → ✏️ (ołówek) → „Wersja”: <b>Nowa wersja</b> → <b>Wdróż</b>. Google zapyta o nowe uprawnienie („łączenie z usługą zewnętrzną” – to pobieranie tytułów). Zezwól tak jak za pierwszym razem.</li>
+              <li>Wróć tutaj i kliknij <b>Synchronizuj teraz</b>. Ta ramka zniknie, a tytuły będą się uzupełniać w tle.</li>
+            </ol>
+          </div>
           <button id="kopiuj-kod">Kopiuj kod połączenia dla innego urządzenia</button>
           <p class="pomoc">Kod połączenia zawiera tajny klucz. Wklejaj go tylko na swoich urządzeniach, nikomu go nie wysyłaj.</p>
           <button id="rozlacz">Odłącz to urządzenie</button>
@@ -142,6 +156,7 @@
   <script src="js/eksport.js"></script>
   <script src="js/skrypt-google.js"></script>
   <script src="js/synchronizacja.js"></script>
+  <script src="js/opisy.js"></script>
   <!-- Logowanie Google (tylko do synchronizacji; bez internetu aplikacja działa dalej) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="js/app.js"></script>

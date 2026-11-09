@@ -24,7 +24,7 @@ function esc(t) {
 }
 
 // Numer wersji aplikacji – podbijaj razem z WERSJA w sw.js.
-const WERSJA_APLIKACJI = 12;
+const WERSJA_APLIKACJI = 13;
 
 // Krótki komunikat na dole ekranu.
 function komunikat(tekst) {
@@ -100,6 +100,7 @@ function pokazPrzeglad() {
     <div class="data">Dodano: <strong>${esc(ladnaData(w.dodano))}</strong>
       ${w.uwagaDaty ? `<span class="uwaga">(${esc(w.uwagaDaty)})</span>` : ''}</div>
     <h2>${esc(w.tytul)}</h2>
+    ${w.autor ? `<p class="autor">${esc(w.autor)}</p>` : ''}
     ${!w.url ? `<p class="notatka">Zadanie / pomysł (bez linku)</p>`
       : zablokowany(w) ? `<p class="link zablokowany">🏠 Otwórz w domu <span>${esc(domena)}</span></p>`
       : `<a class="link" href="${esc(w.url)}" target="_blank" rel="noopener">Otwórz ↗ <span>${esc(domena || w.url)}</span></a>`}
@@ -172,7 +173,7 @@ function rysujListy({ czesc, grupa, cele, el, dodatki = () => '' }) {
 
   const lista = wpisy
     .filter(w => w.status === aktywna[czesc])
-    .filter(w => !szukaj || (w.tytul + ' ' + w.tekst + ' ' + (w.url || '')).toLowerCase().includes(szukaj))
+    .filter(w => !szukaj || (w.tytul + ' ' + w.tekst + ' ' + (w.autor || '') + ' ' + (w.url || '')).toLowerCase().includes(szukaj))
     .sort((a, b) => a.kolejnosc - b.kolejnosc);
 
   el.lista.innerHTML = lista.length ? lista.map(w => `
@@ -180,7 +181,7 @@ function rysujListy({ czesc, grupa, cele, el, dodatki = () => '' }) {
       <div class="data">Dodano: ${esc(ladnaData(w.dodano))}</div>
       <div class="tytul">${Import.czyPrywatne(w) ? '🏠 ' : ''}${w.url && !zablokowany(w)
         ? `<a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.tytul)}</a>`
-        : esc(w.tytul) + (w.url ? ' <span class="uwaga">(otwórz w domu)</span>' : '')}</div>
+        : esc(w.tytul) + (w.url ? ' <span class="uwaga">(otwórz w domu)</span>' : '')}${w.autor ? ` <span class="autor">· ${esc(w.autor)}</span>` : ''}</div>
       ${ostatniaZmiana(w)}
       <div class="dalej">
         ${cele.filter(([s]) => s !== w.status).map(([s, n]) =>
@@ -286,6 +287,7 @@ function pokazStanSync() {
   $('#sync-konfiguracja').hidden = polaczone;
   $('#sync-polaczone').hidden = !polaczone;
   $('#kopiuj-kod').hidden = !Synchronizacja.skrypt();
+  $('#skrypt-aktualizacja').hidden = !(Synchronizacja.skrypt() && Opisy.skryptStary());
   $('#polacz-drive').hidden = !window.USTAWIENIA.googleClientId;
 }
 
@@ -344,6 +346,11 @@ document.addEventListener('DOMContentLoaded', () => {
     $('#skrypt-tekst').value = SKRYPT_GOOGLE.replace('WSTAW_KLUCZ', kluczDlaSkryptu());
     $('#skrypt-pole').hidden = false;
   };
+  $('#pokaz-nowy-skrypt').onclick = () => {
+    $('#nowy-skrypt-tekst').value = SKRYPT_GOOGLE.replace('WSTAW_KLUCZ', Synchronizacja.skrypt().klucz);
+    $('#nowy-skrypt-pole').hidden = false;
+  };
+  $('#kopiuj-nowy-skrypt').onclick = () => kopiuj($('#nowy-skrypt-tekst').value, 'Skopiowano nowy skrypt – wklej go w swoim projekcie na script.google.com.');
   $('#kopiuj-skrypt').onclick = () => kopiuj($('#skrypt-tekst').value, 'Skopiowano skrypt – wklej go na script.google.com.');
   $('#polacz-skrypt').onclick = () => {
     const wpisane = $('#skrypt-adres').value.trim();

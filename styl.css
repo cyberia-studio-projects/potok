@@ -14,7 +14,7 @@ body { margin: 0; font: 16px/1.45 system-ui, sans-serif; background: var(--tlo);
 header { background: var(--karta); border-bottom: 1px solid var(--ramka); padding: 8px 16px; position: sticky; top: 0; z-index: 1; }
 .kroki { padding-left: 20px; }
 .kroki li { margin-bottom: 10px; }
-#skrypt-tekst { width: 100%; font: 12px/1.4 monospace; margin-top: 8px; background: var(--tlo); color: var(--tekst); border: 1px solid var(--ramka); border-radius: 8px; }
+#skrypt-tekst, #nowy-skrypt-tekst { width: 100%; font: 12px/1.4 monospace; margin-top: 8px; background: var(--tlo); color: var(--tekst); border: 1px solid var(--ramka); border-radius: 8px; }
 #skrypt-adres { width: 100%; font: inherit; padding: 8px; margin: 6px 0; border: 1px solid var(--ramka); border-radius: 8px; background: var(--karta); color: var(--tekst); }
 .naglowek-gora { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .stan-sync { min-height: 32px; padding: 4px 10px; font-size: 13px; color: var(--slaby); }
@@ -35,6 +35,8 @@ main { max-width: 720px; margin: 0 auto; padding: 16px; }
 .uwaga { font-size: 12px; }
 .link { display: inline-block; margin: 4px 0 10px; color: var(--akcent); font-weight: 600; overflow-wrap: anywhere; }
 .link span { font-weight: 400; color: var(--slaby); }
+.autor { margin: -6px 0 8px; font-size: 14px; color: var(--slaby); }
+.tytul .autor { margin: 0; font-size: 13px; }
 .oryginal { font-size: 14px; color: var(--slaby); overflow-wrap: anywhere; }
 .oryginal span { font-weight: 600; }
 .notatka { font-style: italic; color: var(--slaby); }
@@ -72,3 +74,4 @@ form label { display: block; font-weight: 600; }
 #komunikat { position: fixed; left: 50%; bottom: 20px; transform: translateX(-50%); background: var(--tekst); color: var(--tlo);
   padding: 10px 16px; border-radius: 8px; max-width: calc(100% - 32px); }
 .naglowek { margin: 0 0 4px; font-size: 19px; }
+.ramka { border: 1px solid var(--akcent, #4a90d9); border-radius: 10px; padding: 8px 12px; margin: 10px 0; }

@@ -36,6 +36,9 @@ function nowyGoogle() {
     LockService: { getScriptLock: () => ({ waitLock: () => { blokady++; }, releaseLock: () => { blokady--; } }) },
     ContentService: { MimeType: { JSON: 'json' }, createTextOutput: t => ({ tekst: t, setMimeType() { return this; } }) },
     blokady: () => blokady,
+    // Udawany internet dla akcji „opis”: adres → { kod, tekst }.
+    strony: {},
+    UrlFetchApp: { fetch: url => { const st = g.strony[url]; if (!st) throw new Error('brak sieci'); return { getResponseCode: () => st.kod || 200, getContentText: () => st.tekst }; } },
   };
   vm.runInNewContext(kod.replace("'WSTAW_KLUCZ'", "'tajny'"), g);
   return g;
@@ -61,4 +64,25 @@ assert.strictEqual(g.foldery[0].pliki.length, 1);
 assert.strictEqual(g.blokady(), 0, 'blokada nie została zwolniona');
 assert.deepStrictEqual(JSON.parse(g.doPost({ postData: { contents: 'to nie json' } }).tekst), { blad: 'złe dane' });
 assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'kasuj' }), { blad: 'nieznana akcja' });
-console.log('Skrypt Google: OK (klucz, tworzenie pliku, zapis/odczyt, polskie znaki, blokada)');
+
+// 3. Akcja „opis”: tytuł i autor linku.
+const yt = 'https://youtu.be/abc?si=x';
+g.strony['https://www.youtube.com/oembed?format=json&url=' + encodeURIComponent(yt)] = { tekst: JSON.stringify({ title: 'Piosenka – zażółć', author_name: 'Kanał Muzyczny' }) };
+assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: yt }), { tytul: 'Piosenka – zażółć', autor: 'Kanał Muzyczny' });
+g.strony['https://example.com/artykul'] = { tekst: `<html><head><title>Zapasowy</title>
+  <meta content="Rick&#39;s &quot;tekst&quot; o AI" property="og:title">
+  <meta property='og:site_name' content="Blog Ani's"></head></html>` };
+assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://example.com/artykul' }), { tytul: 'Rick\'s "tekst" o AI', autor: "Blog Ani's" });
+g.strony['https://example.com/bez-og'] = { tekst: '<title>Tylko &amp; tytuł</title>' };
+assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://example.com/bez-og' }), { tytul: 'Tylko & tytuł', autor: '' });
+// Facebook z ekranem logowania – bez tytułu, a nie „Facebook”.
+g.strony['https://www.facebook.com/reel/1'] = { tekst: '<meta property="og:title" content="Facebook"><title>Facebook</title>' };
+assert.strictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://www.facebook.com/reel/1' }).tytul, '');
+// Błąd sieci, 404, zły adres, zły klucz – bez wywrotki.
+assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://nie-ma.example' }), { tytul: '' });
+g.strony['https://example.com/404'] = { kod: 404, tekst: '' };
+assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'https://example.com/404' }), { tytul: '' });
+assert.deepStrictEqual(zapytaj(g, { klucz: 'tajny', akcja: 'opis', url: 'file:///C:/x' }), { blad: 'zły adres' });
+assert.deepStrictEqual(zapytaj(g, { klucz: 'zly', akcja: 'opis', url: yt }), { blad: 'zły klucz' });
+assert.strictEqual(JSON.parse(g.doGet().tekst).wersja, 2);
+console.log('Skrypt Google: OK (klucz, tworzenie pliku, zapis/odczyt, polskie znaki, blokada, tytuły linków)');
