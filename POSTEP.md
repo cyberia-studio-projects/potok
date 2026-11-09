@@ -1,5 +1,12 @@
 # Potok – postęp prac i decyzje
 
+## 9.11.2026 – Potok pod adresem https (krok 2a)
+- Adres: **https://cyberia-studio-projects.github.io/potok/** (repozytorium: github.com/cyberia-studio-projects/potok, publiczne – tylko kod).
+- Do repozytorium NIE trafiają: Twoje pliki .docx, zrzuty ekranu, kopie .json (plik `.gitignore`). Testy używają zmyślonego `testy/przyklad.docx`.
+- Przy każdej zmianie GitHub uruchamia testy (w przeglądarce + „jak człowiek”). Strona publikuje się tylko wtedy, gdy przejdą (`.github/workflows/testy-i-strona.yml`; tego pliku nie ma w folderze na dysku, jest tylko w repozytorium).
+- Uwaga: dane w przeglądarce są osobne dla każdego adresu. Wersja z pliku `index.html` i wersja z adresu https mają osobne wpisy. Żeby przenieść wpisy, użyj kopii .json (Pliki → Pobierz kopię → na stronie https: Przywróć z kopii) albo zaimportuj dokument ponownie.
+- Następny krok (2b): zapis na Google Drive.
+
 ## 8.11.2026 (noc, 2) – „Więcej wyborów” dla wpisu bez linku
 - Wpis bez linku pokazuje najpierw 3 przyciski (Dla Claude'a / Zrobię sam / Archiwum). Przycisk **„Więcej wyborów →”** rozwija wszystkie 9 decyzji (Streścić, Obczaić, Zgłębić, Obsidian, Muzyczki, Śmieszne, Dla Claude'a, Zrobię sam, Archiwum). „← Mniej wyborów” wraca do 3.
 - Dla linku działa to tak samo jak wcześniej: „To zadanie →” i „← To jednak treść”.
