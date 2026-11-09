@@ -1,6 +1,15 @@
 # Potok – postęp prac i decyzje
 
-## 9.11.2026 – synchronizacja z Google Drive (krok 2b, w toku)
+## 9.11.2026 – Drive przez skrypt Google (decyzja)
+- Google Cloud wymaga weryfikacji dwuetapowej, a nie chcę telefonu ani PIN-u w Windowsie. **Wybrałem skrypt Google** (bez Google Cloud).
+- Jak to działa: krótki skrypt `skrypt-google/Kod.gs` wklejasz raz na script.google.com i wdrażasz jako „Aplikacja internetowa” (Wykonuj jako: Ja, Dostęp: Każdy). Skrypt odpowiada tylko na zapytania z Twoim tajnym kluczem (32 znaki, wygenerowany przez aplikację) i zapisuje wyłącznie `Potok/Potok.json`.
+- Konfiguracja w aplikacji: **Pliki → Google Drive** (5 kroków z instrukcją). Na drugim urządzeniu wklejasz **kod połączenia** (adres#klucz) z pierwszego.
+- Zaleta: bez logowania co godzinę. Ryzyko: kto zna kod połączenia, ma dostęp do Potok.json. Dlatego kodu nie wysyłaj nikomu, a w razie wycieku wdróż skrypt z nowym kluczem.
+- „Odłącz to urządzenie” nie usuwa wpisów.
+- Testy: `testy/test-skryptu.js` (skrypt na udawanym Google: klucz, plik, zapis/odczyt, polskie znaki, blokada) + `e2e-drive.js` przechodzi cały scenariusz w obu trybach (skrypt i Google Cloud).
+- Sposób przez Google Cloud (Client ID) zostaje w kodzie jako alternatywa, nieużywana.
+
+## 9.11.2026 – synchronizacja z Google Drive (krok 2b)
 - **Gotowe w kodzie** (`js/synchronizacja.js`). Włączy się po wpisaniu Client ID z Google Cloud w `window.USTAWIENIA.googleClientId`. Bez niego znaczek ☁ jest ukryty i aplikacja działa jak dotąd.
 - Dane: folder **Potok** → plik **Potok.json** na Twoim Drive. Uprawnienie `drive.file`, więc aplikacja widzi tylko pliki, które sama utworzyła.
 - Łączenie urządzeń: wpis z jednej strony zostaje zawsze, przy konflikcie wygrywa nowsza zmiana (pole `zmieniono`), a historie z obu stron są sklejane. Nic nie ginie, data dodania się nie zmienia.

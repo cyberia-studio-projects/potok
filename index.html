@@ -80,10 +80,36 @@
 
       <div class="karta">
         <h2>Google Drive</h2>
-        <p class="pomoc">Wszystkie wpisy są zapisywane w pliku <b>Potok/Potok.json</b> na Twoim Google Drive. Aplikacja widzi tylko pliki, które sama utworzyła. Bez internetu zmiany czekają i wyślą się same, gdy sieć wróci.</p>
+        <p class="pomoc">Wszystkie wpisy są zapisywane w pliku <b>Potok/Potok.json</b> na Twoim Google Drive przez Twój własny, krótki skrypt Google. Skrypt rusza tylko ten jeden plik, a jego treść możesz przeczytać. Bez internetu zmiany czekają i wyślą się same, gdy sieć wróci.</p>
         <p id="opis-sync" class="wynik"></p>
-        <button id="polacz-drive">Połącz z Google Drive</button>
-        <button id="sync-teraz">Synchronizuj teraz</button>
+
+        <!-- Połączenie przez skrypt Google: widoczne, dopóki nie połączono -->
+        <div id="sync-konfiguracja">
+          <ol class="kroki">
+            <li><button id="pokaz-skrypt">Pokaż skrypt do wklejenia</button>
+              <div id="skrypt-pole" hidden>
+                <textarea id="skrypt-tekst" readonly rows="8"></textarea>
+                <button id="kopiuj-skrypt">Kopiuj skrypt</button>
+              </div></li>
+            <li>Otwórz <a href="https://script.google.com/home/projects/create" target="_blank" rel="noopener">script.google.com → Nowy projekt</a>. Usuń to, co jest w edytorze, wklej skrypt i zapisz (Ctrl+S).</li>
+            <li>Kliknij <b>Wdróż → Nowe wdrożenie</b>. Przy „Wybierz typ” kliknij zębatkę → <b>Aplikacja internetowa</b>. Ustaw: <b>Wykonuj jako: Ja</b>, <b>Kto ma dostęp: Każdy</b> → <b>Wdróż</b>.</li>
+            <li>Google poprosi o zgodę: <b>Autoryzuj dostęp</b> → wybierz konto. Gdy zobaczysz „Google nie zweryfikował tej aplikacji”, kliknij <b>Zaawansowane → Przejdź do projektu (niebezpieczne)</b> → <b>Zezwól</b>. To Twój własny skrypt, więc to normalne. Google ostrzeże, że skrypt prosi o dostęp do Drive. Tak działa każdy skrypt Google, a ten używa tylko folderu „Potok”.</li>
+            <li>Skopiuj <b>Adres URL aplikacji internetowej</b> (kończy się na <code>/exec</code>) i wklej tutaj:
+              <input id="skrypt-adres" type="url" placeholder="https://script.google.com/macros/s/…/exec">
+              <button id="polacz-skrypt">Połącz</button></li>
+          </ol>
+          <p class="pomoc">Na drugim urządzeniu nie powtarzasz tych kroków. Wklejasz w to samo pole <b>kod połączenia</b> z pierwszego urządzenia.</p>
+          <button id="polacz-drive" hidden>Połącz przez Google Cloud</button>
+        </div>
+
+        <!-- Po połączeniu -->
+        <div id="sync-polaczone" hidden>
+          <button id="sync-teraz">Synchronizuj teraz</button>
+          <button id="kopiuj-kod">Kopiuj kod połączenia dla innego urządzenia</button>
+          <p class="pomoc">Kod połączenia zawiera tajny klucz. Wklejaj go tylko na swoich urządzeniach, nikomu go nie wysyłaj.</p>
+          <button id="rozlacz">Odłącz to urządzenie</button>
+          <p class="pomoc">Odłączenie nie usuwa żadnych wpisów: ani tutaj, ani na Drive.</p>
+        </div>
       </div>
 
       <div class="karta">
@@ -100,7 +126,7 @@
         <button id="eksport-md">Pobierz cały Potok jako .md</button>
         <button id="eksport-json">Pobierz kopię zapasową (.json)</button>
         <label class="plik">Przywróć z kopii <input id="plik-kopia" type="file" accept=".json"></label>
-        <p class="pomoc">Dane są tylko w tej przeglądarce, dopóki nie dodamy synchronizacji z Google Drive. Rób kopię co jakiś czas.</p>
+        <p class="pomoc">Bez połączenia z Google Drive dane są tylko w tej przeglądarce. Wtedy rób kopię co jakiś czas.</p>
       </div>
     </section>
   </main>
@@ -111,6 +137,7 @@
   <script src="js/zip.js"></script>
   <script src="js/import.js"></script>
   <script src="js/eksport.js"></script>
+  <script src="js/skrypt-google.js"></script>
   <script src="js/synchronizacja.js"></script>
   <!-- Logowanie Google (tylko do synchronizacji; bez internetu aplikacja działa dalej) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>

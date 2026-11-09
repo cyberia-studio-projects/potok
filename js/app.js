@@ -276,16 +276,31 @@ function pokazStanSync() {
   el.textContent = tekst;
   el.className = 'stan-sync ' + Synchronizacja.stan;
   el.title = Synchronizacja.blad || '';
-  $('#opis-sync').textContent = !Synchronizacja.dostepne()
-    ? 'Synchronizacja nie jest jeszcze skonfigurowana (brak Client ID).'
-    : Synchronizacja.polaczone() ? 'Połączono. ' + tekst.replace('☁ ', 'Stan: ') : 'Nie połączono.';
-  $('#polacz-drive').hidden = !Synchronizacja.dostepne() || Synchronizacja.polaczone() && !!Synchronizacja.token();
-  $('#sync-teraz').hidden = !Synchronizacja.polaczone();
+  const polaczone = !!Synchronizacja.skrypt() || (Synchronizacja.polaczone() && !!window.USTAWIENIA.googleClientId);
+  $('#opis-sync').textContent = polaczone
+    ? 'Połączono. ' + tekst.replace('☁ ', 'Stan: ') + (Synchronizacja.blad ? ' – ' + Synchronizacja.blad : '')
+    : 'Nie połączono. Zrób raz poniższe kroki (ok. 5 minut).';
+  $('#sync-konfiguracja').hidden = polaczone;
+  $('#sync-polaczone').hidden = !polaczone;
+  $('#kopiuj-kod').hidden = !Synchronizacja.skrypt();
+  $('#polacz-drive').hidden = !window.USTAWIENIA.googleClientId;
+}
+
+// Klucz dla nowego skryptu – tworzony raz i pamiętany, aż do połączenia.
+function kluczDlaSkryptu() {
+  let k = localStorage.getItem(Magazyn.klucz + '.nowyKlucz');
+  if (!k) { k = Synchronizacja.nowyKlucz(); localStorage.setItem(Magazyn.klucz + '.nowyKlucz', k); }
+  return k;
+}
+
+async function kopiuj(tekst, info) {
+  try { await navigator.clipboard.writeText(tekst); komunikat(info); }
+  catch { komunikat('Przeglądarka nie pozwoliła skopiować – zaznacz i skopiuj ręcznie (Ctrl+C).'); }
 }
 
 // Kliknięcie w ☁: zaloguj (jeśli trzeba) albo synchronizuj od razu.
 function kliknijSync() {
-  if (!Synchronizacja.token()) Synchronizacja.zaloguj();
+  if (!Synchronizacja.skrypt() && !Synchronizacja.token()) Synchronizacja.zaloguj();
   else Synchronizacja.synchronizuj();
 }
 
@@ -322,6 +337,31 @@ document.addEventListener('DOMContentLoaded', () => {
   // Synchronizacja z Google Drive.
   $('#stan-sync').onclick = kliknijSync;
   $('#polacz-drive').onclick = () => Synchronizacja.zaloguj();
+  $('#pokaz-skrypt').onclick = () => {
+    $('#skrypt-tekst').value = SKRYPT_GOOGLE.replace('WSTAW_KLUCZ', kluczDlaSkryptu());
+    $('#skrypt-pole').hidden = false;
+  };
+  $('#kopiuj-skrypt').onclick = () => kopiuj($('#skrypt-tekst').value, 'Skopiowano skrypt – wklej go na script.google.com.');
+  $('#polacz-skrypt').onclick = () => {
+    const wpisane = $('#skrypt-adres').value.trim();
+    // Kod połączenia (adres#klucz) z innego urządzenia albo sam adres z kroku 5.
+    const ok = wpisane.includes('#')
+      ? Synchronizacja.ustawSkrypt(wpisane)
+      : Synchronizacja.ustawSkrypt(wpisane, localStorage.getItem(Magazyn.klucz + '.nowyKlucz'));
+    if (!ok) return komunikat(wpisane.includes('#') || localStorage.getItem(Magazyn.klucz + '.nowyKlucz')
+      ? 'To nie wygląda na adres skryptu – powinien kończyć się na /exec.'
+      : 'Najpierw kliknij „Pokaż skrypt do wklejenia” (krok 1).');
+    localStorage.removeItem(Magazyn.klucz + '.nowyKlucz');
+    komunikat('Połączono – pierwsza synchronizacja…');
+    Synchronizacja.synchronizuj();
+    pokazStanSync();
+  };
+  $('#kopiuj-kod').onclick = () => kopiuj(Synchronizacja.kodPolaczenia(), 'Skopiowano kod połączenia – wklej go na drugim urządzeniu w „Pliki → Google Drive”.');
+  $('#rozlacz').onclick = () => {
+    if (!confirm('Odłączyć to urządzenie od Google Drive? Wpisy zostaną tutaj i na Drive.')) return;
+    for (const k of ['.skrypt', '.drive', '.token', '.plikId']) localStorage.removeItem(Magazyn.klucz + k);
+    Synchronizacja.ustawStan('niepolaczone');
+  };
   $('#sync-teraz').onclick = kliknijSync;
   window.addEventListener('potok-stan-synchronizacji', pokazStanSync);
   // Po pobraniu zmian z innego urządzenia – odśwież to, co widać (poza formularzem).

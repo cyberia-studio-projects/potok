@@ -12,6 +12,10 @@
 * { box-sizing: border-box; }
 body { margin: 0; font: 16px/1.45 system-ui, sans-serif; background: var(--tlo); color: var(--tekst); }
 header { background: var(--karta); border-bottom: 1px solid var(--ramka); padding: 8px 16px; position: sticky; top: 0; z-index: 1; }
+.kroki { padding-left: 20px; }
+.kroki li { margin-bottom: 10px; }
+#skrypt-tekst { width: 100%; font: 12px/1.4 monospace; margin-top: 8px; background: var(--tlo); color: var(--tekst); border: 1px solid var(--ramka); border-radius: 8px; }
+#skrypt-adres { width: 100%; font: inherit; padding: 8px; margin: 6px 0; border: 1px solid var(--ramka); border-radius: 8px; background: var(--karta); color: var(--tekst); }
 .naglowek-gora { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
 .stan-sync { min-height: 32px; padding: 4px 10px; font-size: 13px; color: var(--slaby); }
 .stan-sync.czeka, .stan-sync.offline { color: var(--tekst); }

@@ -8,6 +8,9 @@
    4. Wraca internet – zmiana sama trafia na Drive.
    5. Komputer pobiera zmianę z telefonu. Nic nie zginęło.
 
+   Scenariusz przechodzi dwa razy: przez skrypt Google (sposób A)
+   i przez Google Cloud (sposób B).
+
    Użycie: node testy/e2e-drive.js */
 const { chromium, devices } = require('playwright');
 const path = require('path');
@@ -18,7 +21,20 @@ const STRONA = 'file://' + path.join(KATALOG, 'index.html');
 const DOCX = path.join(__dirname, 'przyklad.docx');
 
 /* ---------- Udawany Google Drive: pliki trzymane w pamięci ---------- */
-const drive = { pliki: {}, licznik: 0, zapisy: 0 };
+let drive;
+const ADRES_SKRYPTU = 'https://script.google.com/macros/s/TESTOWY_SKRYPT/exec';
+
+/** Udawany skrypt Google: { klucz, akcja, tresc } → jak skrypt-google/Kod.gs. */
+async function obsluzSkrypt(route) {
+  const z = route.request();
+  const odp = obj => route.fulfill({ status: 200, headers: { ...CORS, 'Content-Type': 'application/json' }, body: JSON.stringify(obj) });
+  if (z.method() !== 'POST') return odp({ potok: 'skrypt działa' });
+  const dane = JSON.parse(z.postData());
+  if (dane.klucz !== 'TAJNY-KLUCZ') return odp({ blad: 'zły klucz' });
+  if (dane.akcja === 'pobierz') return odp({ tresc: drive.skrypt || '{"wersja":1,"wpisy":[]}' });
+  if (dane.akcja === 'zapisz') { drive.skrypt = dane.tresc; drive.zapisy++; return odp({ ok: true }); }
+  return odp({ blad: 'nieznana akcja' });
+}
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' };
 
 async function obsluzDrive(route) {
@@ -55,11 +71,12 @@ async function obsluzDrive(route) {
 }
 
 /** Nowe „urządzenie”: osobna przeglądarka z udawanym kontem Google. */
-async function urzadzenie(przegladarka, opcje) {
+async function urzadzenie(przegladarka, opcje, tryb) {
   const k = await przegladarka.newContext({ ...opcje, acceptDownloads: true });
   await k.route('https://www.googleapis.com/**', obsluzDrive);
+  await k.route(ADRES_SKRYPTU, obsluzSkrypt);
   await k.route('https://accounts.google.com/**', r => r.abort());   // logowanie udajemy tokenem
-  await k.addInitScript(() => {
+  if (tryb === 'cloud') await k.addInitScript(() => {
     window.USTAWIENIA = { googleClientId: 'testowy.apps.googleusercontent.com' };
     if (!localStorage.getItem('potok.v1.token')) {
       localStorage.setItem('potok.v1.token', JSON.stringify({ token: 'TOKEN-TESTOWY', wygasa: Date.now() + 3600e3 }));
@@ -74,22 +91,56 @@ async function urzadzenie(przegladarka, opcje) {
 }
 
 const stanSync = s => s.textContent('#stan-sync');
+/** Czeka, aż urządzenie wyśle wszystko na Drive (kolejka pusta, stan „zapisane”). */
+const czekajWysylke = s => s.waitForFunction(() => !Magazyn.czekaNaWyslanie() && Synchronizacja.stan === 'zapisane', null, { timeout: 10000 });
 const czekajNa = (s, wzor) => s.waitForFunction(w => new RegExp(w).test(document.querySelector('#stan-sync').textContent), wzor.source, { timeout: 10000 });
 
-(async () => {
-  const przegladarka = await chromium.launch();
+/** Treść Potok.json na udawanym Drive (w obu trybach). */
+const plikNaDrive = tryb => JSON.parse(tryb === 'skrypt' ? drive.skrypt : Object.values(drive.pliki).find(p => p.name === 'Potok.json').tresc);
+
+async function scenariusz(przegladarka, tryb) {
+  drive = { pliki: {}, licznik: 0, zapisy: 0, skrypt: '' };
+  console.log(`--- Tryb: ${tryb === 'skrypt' ? 'skrypt Google' : 'Google Cloud'} ---`);
+
+  // 0. Komputer: połączenie (w trybie skryptu – jak człowiek, przez ekran „Pliki”).
+  const komp = await urzadzenie(przegladarka, {}, tryb);
+  let kodPolaczenia = '';
+  if (tryb === 'skrypt') {
+    await komp.s.click('nav [data-widok=eksport]');
+    await komp.s.click('#pokaz-skrypt');
+    const skrypt = await komp.s.inputValue('#skrypt-tekst');
+    const klucz = (skrypt.match(/const KLUCZ = '([^']+)'/) || [])[1];
+    assert(klucz && klucz.length === 32 && klucz !== 'WSTAW_KLUCZ', 'skrypt bez klucza');
+    // Udawany skrypt zna tylko 'TAJNY-KLUCZ' – podmieniamy wygenerowany klucz w pamięci.
+    await komp.s.evaluate(() => localStorage.setItem('potok.v1.nowyKlucz', 'TAJNY-KLUCZ'));
+    await komp.s.fill('#skrypt-adres', 'https://example.com/zly-adres');
+    await komp.s.click('#polacz-skrypt');
+    assert(/exec/.test(await komp.s.textContent('#komunikat')), 'brak ostrzeżenia o złym adresie');
+    await komp.s.fill('#skrypt-adres', ADRES_SKRYPTU);
+    await komp.s.click('#polacz-skrypt');
+    await czekajNa(komp.s, /zapisane/);
+    assert(!(await komp.s.isVisible('#sync-konfiguracja')), 'instrukcja widoczna po połączeniu');
+    kodPolaczenia = await komp.s.evaluate(() => Synchronizacja.kodPolaczenia());
+    assert.strictEqual(kodPolaczenia, ADRES_SKRYPTU + '#TAJNY-KLUCZ');
+    console.log('0. Połączono przez ekran „Pliki” (skrypt + adres /exec).');
+  }
 
   // 1. Komputer: import i wysłanie na Drive.
-  const komp = await urzadzenie(przegladarka, {});
   await komp.s.setInputFiles('#plik-import', DOCX);
-  await czekajNa(komp.s, /zapisane/);
+  await komp.s.waitForFunction(() => /Zaimportowano/.test(document.querySelector('#wynik-importu').textContent));
+  await czekajWysylke(komp.s);
   const ileWpisow = await komp.s.evaluate(() => Magazyn.wczytaj().length);
-  const naDrive = JSON.parse(Object.values(drive.pliki).find(p => p.name === 'Potok.json').tresc).wpisy.length;
+  const naDrive = plikNaDrive(tryb).wpisy.length;
   assert.strictEqual(naDrive, ileWpisow, 'na Drive nie ma wszystkich wpisów');
   console.log(`1. Komputer wysłał ${naDrive} wpisów na Drive.`);
 
-  // 2. Telefon: pusty, pobiera wszystko.
-  const tel = await urzadzenie(przegladarka, devices['Pixel 7']);
+  // 2. Telefon: pusty, pobiera wszystko (w trybie skryptu – po wklejeniu kodu połączenia).
+  const tel = await urzadzenie(przegladarka, devices['Pixel 7'], tryb);
+  if (tryb === 'skrypt') {
+    await tel.s.click('nav [data-widok=eksport]');
+    await tel.s.fill('#skrypt-adres', kodPolaczenia);
+    await tel.s.click('#polacz-skrypt');
+  }
   await czekajNa(tel.s, /zapisane/);
   assert.strictEqual(await tel.s.evaluate(() => Magazyn.wczytaj().length), ileWpisow, 'telefon nie pobrał wpisów');
   console.log('2. Telefon pobrał wszystko z Drive.');
@@ -126,19 +177,43 @@ const czekajNa = (s, wzor) => s.waitForFunction(w => new RegExp(w).test(document
     await u.s.fill('#nowy-url', url);
     await u.s.click('#form-dodaj button');
   }
-  await czekajNa(komp.s, /zapisane/); await czekajNa(tel.s, /zapisane/);
+  await czekajWysylke(komp.s); await czekajWysylke(tel.s);
   await komp.s.click('#stan-sync'); await czekajNa(komp.s, /zapisane/);
   const adresy = await komp.s.evaluate(() => Magazyn.wczytaj().map(w => w.url));
   assert(adresy.includes('https://example.com/z-komputera') && adresy.includes('https://example.com/z-telefonu'), 'zginął wpis dodany równocześnie');
   console.log('6. Wpisy dodane równocześnie na dwóch urządzeniach – oba są.');
 
-  // 7. Wygasła sesja Google: znaczek prosi o kliknięcie, dane zostają.
-  await tel.s.evaluate(() => localStorage.setItem('potok.v1.token', JSON.stringify({ token: 'STARY', wygasa: Date.now() + 3600e3 })));
-  await tel.s.click('#stan-sync');
-  await czekajNa(tel.s, /kliknij/);
-  console.log('7. Wygasła sesja: znaczek ☁ prosi o kliknięcie.');
+  if (tryb === 'cloud') {
+    // 7. Wygasła sesja Google: znaczek prosi o kliknięcie, dane zostają.
+    await tel.s.evaluate(() => localStorage.setItem('potok.v1.token', JSON.stringify({ token: 'STARY', wygasa: Date.now() + 3600e3 })));
+    await tel.s.click('#stan-sync');
+    await czekajNa(tel.s, /kliknij/);
+    console.log('7. Wygasła sesja: znaczek ☁ prosi o kliknięcie.');
+  } else {
+    // 7. Zły klucz (np. skrypt wdrożony od nowa): czytelny błąd, wpisy zostają.
+    const przed = await tel.s.evaluate(() => Magazyn.wczytaj().length);
+    await tel.s.evaluate(() => localStorage.setItem('potok.v1.skrypt', JSON.stringify({ url: Synchronizacja.skrypt().url, klucz: 'ZLY' })));
+    await tel.s.click('#stan-sync');
+    await czekajNa(tel.s, /błąd/);
+    assert(/zły klucz/.test(await tel.s.getAttribute('#stan-sync', 'title')), 'brak opisu błędu');
+    assert.strictEqual(await tel.s.evaluate(() => Magazyn.wczytaj().length), przed, 'błąd usunął wpisy');
+    // 8. Odłączenie urządzenia nie usuwa wpisów.
+    tel.s.once('dialog', d => d.accept());
+    await tel.s.click('nav [data-widok=eksport]');
+    await tel.s.click('#rozlacz');
+    assert(await tel.s.isVisible('#sync-konfiguracja'), 'po odłączeniu brak instrukcji');
+    assert.strictEqual(await tel.s.evaluate(() => Magazyn.wczytaj().length), przed, 'odłączenie usunęło wpisy');
+    console.log('7. Zły klucz: czytelny błąd. 8. Odłączenie: wpisy zostają.');
+  }
 
   assert.deepStrictEqual([...komp.bledy, ...tel.bledy], [], 'błędy JavaScript na stronie');
+  await komp.k.close(); await tel.k.close();
+}
+
+(async () => {
+  const przegladarka = await chromium.launch();
+  await scenariusz(przegladarka, 'skrypt');
+  await scenariusz(przegladarka, 'cloud');
   console.log('E2E DRIVE OK');
   await przegladarka.close();
 })().catch(e => { console.error('E2E DRIVE BŁĄD:', e.message); process.exit(1); });

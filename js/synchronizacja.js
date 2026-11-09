@@ -15,9 +15,14 @@
      zmianie i gdy wraca internet. Bez internetu zmiany czekają w kolejce
      („do wysłania”) – nic nie trzeba pamiętać.
 
-   Logowanie: biblioteka Google Identity Services (skrypt z accounts.google.com).
-   Daje „token” ważny ok. godziny; po wygaśnięciu wystarczy jedno kliknięcie
-   w znaczek ☁ u góry.
+   Dwa sposoby połączenia z Drive:
+   A) SKRYPT GOOGLE (używany przez Dariusza): mały skrypt na script.google.com
+      (plik skrypt-google/Kod.gs) działa na Twoim koncie i czyta/zapisuje
+      Potok.json. Aplikacja zna jego adres i tajny klucz („kod połączenia”).
+      Bez Google Cloud, bez logowania co godzinę.
+   B) GOOGLE CLOUD (OAuth): wymaga „Client ID” z Google Cloud. Logowanie
+      biblioteką Google Identity Services daje „token” ważny ok. godziny;
+      po wygaśnięciu wystarczy jedno kliknięcie w znaczek ☁ u góry.
    ===================================================================== */
 
 // Client ID z Google Cloud (nie jest tajny). Testy mogą go podmienić.
@@ -75,7 +80,50 @@ const Synchronizacja = {
   /* ---------------- Logowanie Google ------------------------------ */
 
   dostepne() {
-    return !!window.USTAWIENIA.googleClientId;
+    return !!window.USTAWIENIA.googleClientId || !!this.skrypt();
+  },
+
+  /* ---------------- Sposób A: skrypt Google ----------------------- */
+
+  /** Zapisany skrypt: { url, klucz } albo null. */
+  skrypt() {
+    try { return JSON.parse(localStorage.getItem(Magazyn.klucz + '.skrypt') || 'null'); }
+    catch { return null; }
+  },
+
+  /** Losowy tajny klucz (32 znaki) – tylko Ty i Twój skrypt go znacie. */
+  nowyKlucz() {
+    const znaki = 'abcdefghijkmnopqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    return Array.from(crypto.getRandomValues(new Uint8Array(32)), b => znaki[b % znaki.length]).join('');
+  },
+
+  /**
+   * Zapisuje połączenie. Przyjmuje „kod połączenia” (adres#klucz)
+   * albo sam adres skryptu + klucz osobno. Zwraca true, gdy wygląda poprawnie.
+   */
+  ustawSkrypt(kodLubAdres, klucz) {
+    let [url, k] = String(kodLubAdres || '').trim().split('#');
+    k = k || klucz;
+    if (!/^https:\/\/script\.google\.com\/macros\/s\/[\w-]+\/exec$/.test(url) || !k) return false;
+    localStorage.setItem(Magazyn.klucz + '.skrypt', JSON.stringify({ url, klucz: k }));
+    localStorage.setItem(Magazyn.klucz + '.drive', '1');
+    return true;
+  },
+
+  /** Kod połączenia do wklejenia na innym urządzeniu (zawiera tajny klucz!). */
+  kodPolaczenia() {
+    const s = this.skrypt();
+    return s ? s.url + '#' + s.klucz : '';
+  },
+
+  /** Zapytanie do skryptu. Bez nagłówków – przeglądarka nie robi wtedy dodatkowego sprawdzenia (CORS). */
+  async doSkryptu(dane) {
+    const s = this.skrypt();
+    const odp = await fetch(s.url, { method: 'POST', body: JSON.stringify({ ...dane, klucz: s.klucz }) });
+    if (!odp.ok) throw new Error('Skrypt Google odpowiedział błędem ' + odp.status);
+    const wynik = await odp.json();
+    if (wynik.blad) throw new Error('Skrypt Google: ' + wynik.blad);
+    return wynik;
   },
 
   /** Token zapisany na tym urządzeniu (jeśli jeszcze ważny). */
@@ -170,6 +218,10 @@ const Synchronizacja = {
   },
 
   async pobierz(id) {
+    if (this.skrypt()) {
+      const { tresc } = await this.doSkryptu({ akcja: 'pobierz' });
+      return tresc && tresc.trim() ? JSON.parse(tresc).wpisy || [] : [];
+    }
     const odp = await this.api(`${DRIVE}/files/${id}?alt=media`);
     const tekst = await odp.text();
     if (!tekst.trim()) return [];
@@ -177,6 +229,10 @@ const Synchronizacja = {
   },
 
   async wyslij(id, wpisy) {
+    if (this.skrypt()) {
+      await this.doSkryptu({ akcja: 'zapisz', tresc: JSON.stringify({ wersja: 1, zapisano: new Date().toISOString(), wpisy }, null, 1) });
+      return;
+    }
     await this.api(`${DRIVE_UPLOAD}/files/${id}?uploadType=media`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -190,13 +246,13 @@ const Synchronizacja = {
   async synchronizuj() {
     if (!this.dostepne()) return this.ustawStan('niepolaczone');
     if (!navigator.onLine) return this.ustawStan('offline');
-    if (!this.token()) return this.ustawStan(this.polaczone() ? 'zaloguj' : 'niepolaczone');
+    if (!this.skrypt() && !this.token()) return this.ustawStan(this.polaczone() ? 'zaloguj' : 'niepolaczone');
     if (this.trwa) { this.ponow = true; return; }   // jedna synchronizacja naraz
 
     this.trwa = true;
     this.ustawStan('trwa');
     try {
-      const id = await this.idPliku();
+      const id = this.skrypt() ? 'skrypt' : await this.idPliku();
       const zdalne = await this.pobierz(id);
       const lokalne = Magazyn.wczytaj();
       const { wpisy, inneNizZdalne } = this.scal(lokalne, zdalne);
@@ -239,7 +295,7 @@ const Synchronizacja = {
       case 'offline':   return Magazyn.czekaNaWyslanie() ? '☁ bez internetu – wyślę później' : '☁ bez internetu';
       case 'zaloguj':   return '☁ kliknij, aby zsynchronizować';
       case 'blad':      return '☁ błąd – kliknij, aby ponowić';
-      default:          return this.dostepne() ? '☁ połącz z Google Drive' : '';
+      default:          return window.USTAWIENIA.googleClientId ? '☁ połącz z Google Drive' : '';
     }
   },
 
