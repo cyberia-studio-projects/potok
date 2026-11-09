@@ -142,6 +142,7 @@ const ZRZUTY = process.argv[3];
   await s.goto('file://' + path.join(KATALOG, 'index.html') + '?title=' + encodeURIComponent('Muzyczka') + '&text=' + encodeURIComponent('https://youtu.be/xyz123?si=AbC'));
   const ile2 = await s.evaluate(() => Magazyn.wczytaj().filter(w => w.zrodlo === 'udostępnij').length);
   assert.strictEqual(ile2, 2, 'udostępnianie z Androida (bez udostepnij=1) nie dodało wpisu');
+  assert.match(await s.locator('#wersja').textContent(), /Wersja aplikacji: \d+ · Ostatnie udostępnienie: .*youtu\.be\/xyz123/);
 
   assert.deepStrictEqual(bledy, [], 'błędy JavaScript na stronie');
   console.log('E2E OK');

@@ -30,6 +30,7 @@ jobs:
       - run: node testy/test-skryptu.js
       - run: node testy/e2e.js
       - run: node testy/e2e-drive.js
+      - run: node testy/e2e-offline.js
 
   strona:
     needs: testy

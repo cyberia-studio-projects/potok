@@ -4,6 +4,8 @@
 - Błąd: udostępnienie z YouTube na Androidzie nic nie dodawało. Chrome przy share_target typu GET zastępuje parametry z adresu „action”, więc znikało nasze `udostepnij=1`.
 - Poprawka: udostępnienie rozpoznajemy po samych parametrach title/text/url. Nowy test e2e odtwarza adres taki, jak buduje go Chrome.
 - Telefon połączony z Drive kodem połączenia – działa (90 wpisów).
+- Telefon mógł trzymać starą wersję do 10 minut (pamięć przeglądarki przy GitHub Pages). Service worker pyta teraz zawsze serwer (`cache: 'no-cache'`). Na dole „Pliki” jest numer wersji i ślad ostatniego udostępnienia.
+- Nowy test `testy/e2e-offline.js`: aplikacja z adresu http z service workerem, bez internetu się otwiera, a udostępnienie bez sieci dodaje wpis.
 
 ## 9.11.2026 – Drive przez skrypt Google (decyzja)
 - Google Cloud wymaga weryfikacji dwuetapowej, a nie chcę telefonu ani PIN-u w Windowsie. **Wybrałem skrypt Google** (bez Google Cloud).

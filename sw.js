@@ -1,6 +1,6 @@
 /* sw.js – service worker: zapamiętuje pliki aplikacji, żeby działała offline.
    Przy każdej zmianie plików podbij WERSJA – wtedy telefon pobierze nowe. */
-const WERSJA = 'potok-v11';
+const WERSJA = 'potok-v12';
 const PLIKI = ['./', 'index.html', 'styl.css', 'manifest.webmanifest', 'ikona.svg',
   'js/magazyn.js', 'js/zip.js', 'js/import.js', 'js/eksport.js', 'js/skrypt-google.js', 'js/synchronizacja.js', 'js/app.js'];
 
@@ -12,7 +12,9 @@ self.addEventListener('fetch', e => {
   if (e.request.method !== 'GET') return;
   // Google (logowanie, Drive) – zawsze prosto do sieci, nic nie zapamiętujemy.
   if (!e.request.url.startsWith(self.location.origin)) return;
-  e.respondWith(fetch(e.request).then(r => {
+  // cache: 'no-cache' – nie bierz starej kopii z pamięci przeglądarki
+  // (GitHub Pages pozwala jej trzymać pliki do 10 minut), zawsze pytaj serwer.
+  e.respondWith(fetch(e.request.url, { cache: 'no-cache' }).then(r => {
     const kopia = r.clone();
     caches.open(WERSJA).then(c => c.put(e.request, kopia));
     return r;

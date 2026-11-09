@@ -23,6 +23,9 @@ function esc(t) {
   return String(t ?? '').replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// Numer wersji aplikacji – podbijaj razem z WERSJA w sw.js.
+const WERSJA_APLIKACJI = 12;
+
 // Krótki komunikat na dole ekranu.
 function komunikat(tekst) {
   const el = $('#komunikat');
@@ -437,6 +440,9 @@ document.addEventListener('DOMContentLoaded', () => {
   // znika), więc rozpoznajemy udostępnienie po samych title/text/url.
   const par = new URLSearchParams(location.search);
   if (['udostepnij', 'title', 'text', 'url'].some(p => par.has(p))) {
+    // Ślad ostatniego udostępnienia (tylko na tym urządzeniu) – do sprawdzania błędów.
+    localStorage.setItem(Magazyn.klucz + '.udostepnienie',
+      new Date().toLocaleString('pl-PL') + ' · ' + decodeURIComponent(location.search).slice(0, 300));
     const tekst = par.get('text') || '';
     const url = par.get('url') || (tekst.match(/https?:\/\/\S+/) || [''])[0];
     const tytul = par.get('title') || tekst.replace(url, '').trim();
@@ -449,6 +455,10 @@ document.addEventListener('DOMContentLoaded', () => {
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) {
     navigator.serviceWorker.register('sw.js');
   }
+
+  const slad = localStorage.getItem(Magazyn.klucz + '.udostepnienie');
+  $('#wersja').textContent = 'Wersja aplikacji: ' + WERSJA_APLIKACJI +
+    (slad ? ' · Ostatnie udostępnienie: ' + slad : ' · Jeszcze nic nie udostępniono do Potoku na tym urządzeniu.');
 
   pokazWidok(Magazyn.wczytaj().length ? 'przeglad' : 'eksport');
   Synchronizacja.start();
