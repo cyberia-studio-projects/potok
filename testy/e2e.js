@@ -143,6 +143,29 @@ const ZRZUTY = process.argv[3];
   assert.strictEqual(await s.locator('#reszta-streszczen li').count(), ileReszta);
   assert.strictEqual(ileWww + ileReszta, await s.evaluate(() => Magazyn.wczytaj().filter(w => w.status === 'do_streszczenia').length), 'kolejka nie sumuje się do listy Streścić');
 
+  // 8c. Po streszczeniu: jednym kliknięciem wysłane → Archiwum (bez przesuniętych do Zgłębić i bez nowych), z cofaniem.
+  const ileStr = () => s.evaluate(() => Magazyn.wczytaj().filter(w => w.status === 'do_streszczenia').length);
+  await s.evaluate(() => { localStorage.removeItem(Magazyn.klucz + '.doStreszczenia'); pokazStanEksportu(); });
+  assert(await s.isHidden('#po-streszczeniu'), 'przycisk „Streszczone” przed wysłaniem');
+  const [plikTxt] = await Promise.all([s.waitForEvent('download'), s.click('#eksport-streszczen')]);
+  await plikTxt.cancel().catch(() => {});
+  assert(await s.isVisible('#streszczone'), 'brak przycisku „Streszczone” po pobraniu pliku');
+  const wyslane = await ileStr();
+  // Jeden ciekawy → Zgłębić; jeden nowy dochodzi po wysłaniu.
+  await s.evaluate(() => {
+    const w = Magazyn.wczytaj().find(x => x.status === 'do_streszczenia'); Magazyn.zmienStatus(w.id, 'zglebic');
+    Magazyn.dodaj([{ url: 'https://example.com/po-wyslaniu', tytul: 'nowy', tekst: 'nowy' }]);
+    const n = Magazyn.wczytaj().find(x => x.url === 'https://example.com/po-wyslaniu'); Magazyn.zmienStatus(n.id, 'do_streszczenia');
+    pokazStanEksportu();
+  });
+  assert.match(await s.textContent('#streszczone'), new RegExp(`przenieś ${wyslane - 1} wysłanych`));
+  s.once('dialog', d => d.accept());
+  await s.click('#streszczone');
+  assert.strictEqual(await ileStr(), 1, 'w „Streścić” powinien zostać tylko nowy wpis');
+  assert(await s.isHidden('#po-streszczeniu'));
+  await s.click('#cofnij-streszczone');
+  assert.strictEqual(await ileStr(), wyslane, 'cofnięcie nie przywróciło wpisów');
+
   // 9. Udostępnij → Potok (jak z Androida).
   await s.goto('file://' + path.join(KATALOG, 'index.html') + '?udostepnij=1&title=Film&text=' + encodeURIComponent('https://youtu.be/abc'));
   const ile = await s.evaluate(() => Magazyn.wczytaj().filter(w => w.zrodlo === 'udostępnij').length);

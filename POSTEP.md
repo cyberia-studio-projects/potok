@@ -1,5 +1,9 @@
 # Potok – postęp prac i decyzje
 
+## 9.11.2026 – „Streszczone” jednym kliknięciem
+- Po pobraniu pliku / skopiowaniu adresów Potok pamięta (na tym urządzeniu), które wpisy wysłano do NotebookLM. W Pliki → Kolejka „Streścić” pojawia się przycisk „Streszczone – przenieś N wysłanych do Archiwum”, z potwierdzeniem i „Cofnij”.
+- Przenosi tylko te wysłane, które dalej są w „Streścić”: przesunięte wcześniej do „Zgłębić” i dodane po wysłaniu zostają. Test 8c w e2e.js.
+
 ## 9.11.2026 – kolejka „Streścić”: które wpisy ręcznie
 - Pytanie: „Streścić 25”, a w pliku 20 adresów. Odpowiedź: 5 to pliki z dysku (file://) lub notatki bez linku, których NotebookLM nie pobierze z adresu. Teraz pod licznikiem jest rozwijana lista tych wpisów (z nazwą/ścieżką pliku). Test w e2e.js sprawdza, że www + ręczne = lista „Streścić”.
 - Usuwanie z Archiwum: na razie zostaje jak jest (nic nie usuwamy).

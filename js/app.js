@@ -24,7 +24,7 @@ function esc(t) {
 }
 
 // Numer wersji aplikacji – podbijaj razem z WERSJA w sw.js.
-const WERSJA_APLIKACJI = 14;
+const WERSJA_APLIKACJI = 15;
 
 // Krótki komunikat na dole ekranu.
 function komunikat(tekst) {
@@ -316,6 +316,17 @@ function pokazUrzadzenie() {
   $('#znak-urzadzenia').textContent = r === 'sluzbowe' ? '💼 służbowy' : '';
 }
 
+// Wpisy wysłane do NotebookLM (pobrany plik / skopiowane adresy) – pamiętane na tym urządzeniu.
+const KLUCZ_WYSLANE = () => Magazyn.klucz + '.doStreszczenia';
+function wyslaneDoStreszczenia() {
+  try { return JSON.parse(localStorage.getItem(KLUCZ_WYSLANE()) || '[]'); } catch { return []; }
+}
+function zapamietajWyslane() {
+  const k = Eksport.kolejkaStreszczen(Magazyn.wczytaj());
+  localStorage.setItem(KLUCZ_WYSLANE(), JSON.stringify([...k.www, ...k.reszta].map(w => w.id)));
+  pokazStanEksportu();
+}
+
 function pokazStanEksportu() {
   const wpisy = Magazyn.wczytaj();
   const { www, reszta } = Eksport.kolejkaStreszczen(wpisy);
@@ -328,6 +339,10 @@ function pokazStanEksportu() {
   el.querySelector('ul').innerHTML = reszta.map(w => `<li>${esc(w.tytul)}${w.url
     ? `<br><span class="uwaga">${esc((() => { const a = w.url.replace(/^file:\/\/\/?/, ''); try { return decodeURIComponent(a); } catch { return a; } })())}</span>`
     : ' <span class="uwaga">(notatka bez linku)</span>'}</li>`).join('');
+  // Przycisk „Streszczone”: tylko te wpisy, które były w pliku/kopii i dalej czekają w „Streścić”.
+  const czekajace = wyslaneDoStreszczenia().filter(id => wpisy.some(w => w.id === id && w.status === 'do_streszczenia'));
+  $('#po-streszczeniu').hidden = !czekajace.length;
+  $('#streszczone').textContent = `Streszczone – przenieś ${czekajace.length} wysłanych do Archiwum`;
   $('#stan-calosci').textContent = `Wszystkich wpisów: ${wpisy.length}.`;
 }
 
@@ -422,12 +437,32 @@ document.addEventListener('DOMContentLoaded', () => {
     const { tekst, www } = Eksport.kolejkaStreszczen(Magazyn.wczytaj());
     if (!www.length) return komunikat('Kolejka „Streścić” jest pusta.');
     Eksport.pobierz(`do-streszczenia-${Eksport.dzien()}.txt`, tekst);
+    zapamietajWyslane();
   };
   $('#kopiuj-streszczenia').onclick = async () => {
     const { tekst, www } = Eksport.kolejkaStreszczen(Magazyn.wczytaj());
     if (!www.length) return komunikat('Kolejka „Streścić” jest pusta.');
-    try { await navigator.clipboard.writeText(tekst); komunikat(`Skopiowano ${www.length} adresów.`); }
+    try { await navigator.clipboard.writeText(tekst); komunikat(`Skopiowano ${www.length} adresów.`); zapamietajWyslane(); }
     catch { komunikat('Przeglądarka nie pozwoliła skopiować – użyj pobierania pliku.'); }
+  };
+  $('#streszczone').onclick = () => {
+    const wpisy = Magazyn.wczytaj();
+    const ids = wyslaneDoStreszczenia().filter(id => wpisy.some(w => w.id === id && w.status === 'do_streszczenia'));
+    if (!confirm(`Przenieść ${ids.length} wpisów ze „Streścić” do Archiwum?\nCiekawe przesuń najpierw do „Zgłębić”.`)) return;
+    Magazyn.zmienStatusWielu(ids, 'archiwum');
+    localStorage.removeItem(KLUCZ_WYSLANE());
+    const cofnij = $('#cofnij-streszczone');
+    cofnij.textContent = `Cofnij – przywróć ${ids.length} do „Streścić”`;
+    cofnij.hidden = false;
+    cofnij.onclick = () => {
+      Magazyn.zmienStatusWielu(ids, 'do_streszczenia');
+      localStorage.setItem(KLUCZ_WYSLANE(), JSON.stringify(ids));
+      cofnij.hidden = true;
+      komunikat('Przywrócono do „Streścić”.');
+      pokazStanEksportu();
+    };
+    komunikat(`Przeniesiono ${ids.length} do Archiwum.`);
+    pokazStanEksportu();
   };
   $('#eksport-md').onclick = () =>
     Eksport.pobierz(`Potok-${Eksport.dzien()}.md`, Eksport.markdown(Magazyn.wczytaj()), 'text/markdown');

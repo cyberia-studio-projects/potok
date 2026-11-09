@@ -209,13 +209,23 @@ const Magazyn = {
 
   /** Zmienia status wpisu i dopisuje zmianę do historii. */
   zmienStatus(id, nowyStatus) {
+    this.zmienStatusWielu([id], nowyStatus);
+  },
+
+  /** To samo dla wielu wpisów naraz (jeden zapis). Zwraca, ile się zmieniło. */
+  zmienStatusWielu(ids, nowyStatus) {
     const wpisy = this.wczytaj();
-    const w = wpisy.find(x => x.id === id);
-    if (!w || w.status === nowyStatus) return;
-    w.historia.push({ data: new Date().toISOString(), z: w.status, na: nowyStatus });
-    w.zmieniono = new Date().toISOString();
-    w.status = nowyStatus;
-    this.zapisz(wpisy);
+    const teraz = new Date().toISOString();
+    let ile = 0;
+    for (const w of wpisy) {
+      if (!ids.includes(w.id) || w.status === nowyStatus) continue;
+      w.historia.push({ data: teraz, z: w.status, na: nowyStatus });
+      w.zmieniono = teraz;
+      w.status = nowyStatus;
+      ile++;
+    }
+    if (ile) this.zapisz(wpisy);
+    return ile;
   },
 
   /**
