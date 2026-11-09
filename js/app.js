@@ -433,8 +433,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // „Udostępnij → Potok” na Androidzie: system otwiera aplikację z adresem
   // w parametrach (?url=…&title=…&text=…), patrz share_target w manifeście.
+  // Uwaga: Chrome ZASTĘPUJE parametry z adresu „action” (nasze udostepnij=1
+  // znika), więc rozpoznajemy udostępnienie po samych title/text/url.
   const par = new URLSearchParams(location.search);
-  if (par.has('udostepnij')) {
+  if (['udostepnij', 'title', 'text', 'url'].some(p => par.has(p))) {
     const tekst = par.get('text') || '';
     const url = par.get('url') || (tekst.match(/https?:\/\/\S+/) || [''])[0];
     const tytul = par.get('title') || tekst.replace(url, '').trim();

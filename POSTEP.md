@@ -1,5 +1,10 @@
 # Potok – postęp prac i decyzje
 
+## 9.11.2026 – poprawka „Udostępnij → Potok”
+- Błąd: udostępnienie z YouTube na Androidzie nic nie dodawało. Chrome przy share_target typu GET zastępuje parametry z adresu „action”, więc znikało nasze `udostepnij=1`.
+- Poprawka: udostępnienie rozpoznajemy po samych parametrach title/text/url. Nowy test e2e odtwarza adres taki, jak buduje go Chrome.
+- Telefon połączony z Drive kodem połączenia – działa (90 wpisów).
+
 ## 9.11.2026 – Drive przez skrypt Google (decyzja)
 - Google Cloud wymaga weryfikacji dwuetapowej, a nie chcę telefonu ani PIN-u w Windowsie. **Wybrałem skrypt Google** (bez Google Cloud).
 - Jak to działa: krótki skrypt `skrypt-google/Kod.gs` wklejasz raz na script.google.com i wdrażasz jako „Aplikacja internetowa” (Wykonuj jako: Ja, Dostęp: Każdy). Skrypt odpowiada tylko na zapytania z Twoim tajnym kluczem (32 znaki, wygenerowany przez aplikację) i zapisuje wyłącznie `Potok/Potok.json`.
