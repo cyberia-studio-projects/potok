@@ -3,6 +3,7 @@
 ## 9.11.2026 – skrypt Google wersja 3 (wersja aplikacji 20)
 - Objaw: „pobrane 0 · bez tytułu 25”, bez żadnego błędu. Skrypt v2 połykał każdy błąd pobierania i zwracał pusty tytuł. Najpewniej Google nie dał mu zgody na łączenie ze stronami (UrlFetchApp), bo przy „Nowej wersji” wdrożenia nie zawsze pyta o nowe uprawnienia.
 - Skrypt v3: zwraca `problem` (np. brak uprawnień, kod HTTP), ma akcję `wersja` i funkcję `sprawdzTytuly` do uruchomienia w edytorze (wymusza zgodę Google, w dzienniku pokazuje tytuł „Me at the zoo”).
+- Potwierdzone u Dariusza: dziennik pokazał „Brak uprawnień: script.external_request”. Ponowne uruchomienie nie pytało o zgodę (Google zapamiętał odmowę przy zgodzie szczegółowej). Rozwiązanie: `ScriptApp.requireAllScopes(ScriptApp.AuthMode.FULL)` na początku `sprawdzTytuly`, wtedy w dzienniku pojawia się link do przyznania zgody. Dopisane do skryptu (wersja aplikacji 21).
 - Aplikacja: raz na uruchomienie (i po „Synchronizuj teraz”) sprawdza wersję skryptu. Przy starszej pokazuje ramkę aktualizacji (5 kroków) i nie pobiera tytułów. Z v3 ponawia nieudane próby v2 (`brak`, `brak-2`). Nowe nieudane mają `brak-3`, a problem widać w Pliki.
 
 ## 9.11.2026 – jeden „wolny” link blokował wszystkie tytuły (wersja 19)

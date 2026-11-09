@@ -39,6 +39,7 @@ function nowyGoogle() {
     // Udawany internet dla akcji „opis”: adres → { kod, tekst }.
     strony: {},
     Logger: { log: () => {} },
+    ScriptApp: { AuthMode: { FULL: 'FULL' }, requireAllScopes: () => {} },
     UrlFetchApp: { fetch: url => { const st = g.strony[url]; if (!st) throw new Error('brak sieci'); return { getResponseCode: () => st.kod || 200, getContentText: () => st.tekst }; } },
   };
   vm.runInNewContext(kod.replace("'WSTAW_KLUCZ'", "'tajny'"), g);

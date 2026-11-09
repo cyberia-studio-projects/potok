@@ -74,6 +74,9 @@ function opisStrony(url) {
     Google zapyta o zgodę na łączenie ze stronami, a w dzienniku
     pojawi się tytuł przykładowego filmu – znak, że wszystko działa. */
 function sprawdzTytuly() {
+  // Jeśli kiedyś odmówiono zgody, Google zapyta o nią jeszcze raz
+  // (w dzienniku pojawi się link „Kliknij tutaj, aby przyznać uprawnienia”).
+  ScriptApp.requireAllScopes(ScriptApp.AuthMode.FULL);
   const o = opisStrony('https://www.youtube.com/watch?v=jNQXAC9IVRw');
   Logger.log(JSON.stringify(o));
   return o;
