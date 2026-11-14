@@ -24,7 +24,7 @@ function esc(t) {
 }
 
 // Numer wersji aplikacji – podbijaj razem z WERSJA w sw.js.
-const WERSJA_APLIKACJI = 21;
+const WERSJA_APLIKACJI = 22;
 
 // Krótki komunikat na dole ekranu.
 function komunikat(tekst) {
@@ -38,6 +38,8 @@ function komunikat(tekst) {
 // Decyzje dostępne w przeglądzie (status → etykieta przycisku).
 // Decyzje: Streścić / Obczaić / Zgłębić / Archiwum (znaczenia w magazyn.js).
 const DECYZJE = ['do_streszczenia', 'obczaic', 'zglebic', 'obsidian', 'muzyka', 'smieszne', 'archiwum'].map(s => [s, STATUSY[s]]);
+// Na listach dodatkowo „Streścić szczegółowo” – decyzja po przeczytaniu krótkiego streszczenia.
+const DECYZJE_LISTY = [DECYZJE[0], ['szczegolowo', STATUSY.szczegolowo], ...DECYZJE.slice(1)];
 // Decyzje dla zadania / pomysłu (wpis bez linku albo „To zadanie →”).
 const DECYZJE_ZADANIA = ['zrobic_claude', 'zrobic_sam', 'archiwum'].map(s => [s, STATUSY[s]]);
 // Pełny wybór dla wpisu bez linku („Więcej wyborów →”): wszystko naraz.
@@ -105,6 +107,7 @@ function pokazPrzeglad() {
       : zablokowany(w) ? `<p class="link zablokowany">🏠 Otwórz w domu <span>${esc(domena)}</span></p>`
       : `<a class="link" href="${esc(w.url)}" target="_blank" rel="noopener">Otwórz ↗ <span>${esc(domena || w.url)}</span></a>`}
     ${w.tekst && w.tekst !== w.tytul ? `<p class="oryginal"><span>Oryginalny wpis:</span> ${esc(w.tekst)}</p>` : ''}
+    ${Streszczenia.html(w)}
     ${w.sugestia && przyciski.some(([s]) => s === w.sugestia) ? `<p class="sugestia">Podpowiedź z oznaczenia w tekście: <strong>${esc(STATUSY[w.sugestia])}</strong></p>` : ''}
     <button class="prywatne ${Import.czyPrywatne(w) ? 'wlaczone' : ''}" data-prywatne="1" aria-pressed="${Import.czyPrywatne(w)}">
       🏠 Tylko prywatnie: <strong>${Import.czyPrywatne(w) ? 'TAK' : 'nie'}</strong>
@@ -183,6 +186,7 @@ function rysujListy({ czesc, grupa, cele, el, dodatki = () => '' }) {
         ? `<a href="${esc(w.url)}" target="_blank" rel="noopener">${esc(w.tytul)}</a>`
         : esc(w.tytul) + (w.url ? ' <span class="uwaga">(otwórz w domu)</span>' : '')}${w.autor ? ` <span class="autor">· ${esc(w.autor)}</span>` : ''}</div>
       ${ostatniaZmiana(w)}
+      ${Streszczenia.html(w)}
       <div class="dalej">
         ${cele.filter(([s]) => s !== w.status).map(([s, n]) =>
           `<button data-id="${w.id}" data-na="${s}">→ ${esc(n)}</button>`).join('')}
@@ -209,7 +213,7 @@ function pokazListy() {
   rysujListy({
     czesc: 'potok',
     grupa: GRUPA_POTOK,
-    cele: DECYZJE,
+    cele: DECYZJE_LISTY,
     el: { statusy: $('#statusy'), lista: $('#lista'), szukaj: $('#szukaj'), podsumowanie: $('#podsumowanie-listy') },
   });
 }
@@ -289,8 +293,9 @@ function pokazStanSync() {
   $('#sync-konfiguracja').hidden = polaczone;
   $('#sync-polaczone').hidden = !polaczone;
   $('#kopiuj-kod').hidden = !Synchronizacja.skrypt();
-  $('#skrypt-aktualizacja').hidden = !(Synchronizacja.skrypt() && Opisy.skryptStary());
+  $('#skrypt-aktualizacja').hidden = !(Synchronizacja.skrypt() && (Opisy.skryptStary() || Streszczenia.skryptStary()));
   $('#stan-opisow').textContent = Synchronizacja.skrypt() ? Opisy.podsumowanie(Magazyn.wczytaj()) : '';
+  $('#stan-streszczen-ai').textContent = Synchronizacja.skrypt() ? Streszczenia.podsumowanie(Magazyn.wczytaj()) : '';
   $('#polacz-drive').hidden = !window.USTAWIENIA.googleClientId;
 }
 
@@ -398,7 +403,7 @@ document.addEventListener('DOMContentLoaded', () => {
     Synchronizacja.ustawStan('niepolaczone');
   };
   // „Synchronizuj teraz” sprawdza też na nowo wersję skryptu (np. po jego aktualizacji).
-  $('#sync-teraz').onclick = () => { Opisy.wersjaSprawdzona = false; kliknijSync(); };
+  $('#sync-teraz').onclick = () => { Opisy.wersjaSprawdzona = false; Streszczenia.wersjaSprawdzona = false; kliknijSync(); };
   window.addEventListener('potok-stan-synchronizacji', pokazStanSync);
   // Po pobraniu zmian z innego urządzenia – odśwież to, co widać (poza formularzem).
   window.addEventListener('potok-odswiez', () => { if (aktualnyWidok !== 'dodaj') pokazWidok(aktualnyWidok); });

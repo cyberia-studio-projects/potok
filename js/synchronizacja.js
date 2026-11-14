@@ -268,6 +268,7 @@ const Synchronizacja = {
       this.ustawStan('zapisane');
       window.dispatchEvent(new Event('potok-odswiez'));   // ekran pokaże nowe dane
       if (typeof Opisy !== 'undefined') Opisy.uzupelnij();              // tytuły gołych linków, w tle
+      if (typeof Streszczenia !== 'undefined') Streszczenia.pobierz();  // streszczenia AI z Drive, w tle
     } catch (e) {
       console.error('Synchronizacja', e);
       if (e.zaloguj) this.ustawStan('zaloguj');

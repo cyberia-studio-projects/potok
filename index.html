@@ -117,9 +117,10 @@
         <div id="sync-polaczone" hidden>
           <button id="sync-teraz">Synchronizuj teraz</button>
           <p id="stan-opisow" class="pomoc"></p>
-          <!-- Pokazywane, gdy skrypt Google jest starszy niż aplikacja (nie umie pobierać tytułów). -->
+          <p id="stan-streszczen-ai" class="pomoc"></p>
+          <!-- Pokazywane, gdy skrypt Google jest starszy niż aplikacja (wersja < 4: bez streszczeń AI). -->
           <div id="skrypt-aktualizacja" class="ramka" hidden>
-            <p><b>Zaktualizuj skrypt Google</b>, żeby Potok pokazywał tytuły i autorów linków (np. z YouTube). Adres i klucz zostają te same, kilka minut, raz.</p>
+            <p><b>Zaktualizuj skrypt Google do wersji 4</b>, żeby Potok sam robił streszczenia AI wpisów „Streścić” (co godzinę, także gdy komputer jest wyłączony) i pokazywał tytuły linków. Adres i klucz zostają te same. Ok. 10 minut, raz.</p>
             <ol class="kroki">
               <li><button id="pokaz-nowy-skrypt">Pokaż nowy skrypt</button>
                 <div id="nowy-skrypt-pole" hidden>
@@ -127,10 +128,12 @@
                   <button id="kopiuj-nowy-skrypt">Kopiuj skrypt</button>
                 </div></li>
               <li>Otwórz <a href="https://script.google.com/home" target="_blank" rel="noopener">script.google.com</a> i swój projekt ze skryptem Potoku. Zaznacz cały stary kod (Ctrl+A), wklej nowy, zapisz (Ctrl+S).</li>
-              <li>U góry edytora, obok przycisku <b>Uruchom</b>, wybierz z listy funkcję <b>sprawdzTytuly</b> i kliknij <b>Uruchom</b>. Google poprosi o uprawnienia (albo w dzienniku pojawi się link „Kliknij tutaj, aby przyznać uprawnienia”): zaznacz <b>wszystkie</b> pola, zwłaszcza „Łączenie się z usługą zewnętrzną”, i <b>Zezwól</b>. Potem uruchom funkcję jeszcze raz. Na dole w „Dzienniku wykonania” powinien pojawić się tytuł „Me at the zoo” – znak, że działa.</li>
+              <li><b>Klucz Gemini (darmowy):</b> otwórz <a href="https://aistudio.google.com/apikey" target="_blank" rel="noopener">aistudio.google.com/apikey</a> → <b>Create API key</b> i skopiuj klucz. W edytorze skryptu kliknij po lewej ⚙ <b>Ustawienia projektu</b> → na dole <b>Właściwości skryptu</b> → <b>Dodaj właściwość skryptu</b>: nazwa <code>GEMINI_KLUCZ</code>, wartość: wklejony klucz → <b>Zapisz</b>. Klucz zostaje tylko w Twoim projekcie, nie w kodzie.</li>
+              <li>Wróć do edytora (◇ <b>Edytor</b>). U góry, obok przycisku <b>Uruchom</b>, wybierz funkcję <b>wlaczStreszczenia</b> i kliknij <b>Uruchom</b>. Google poprosi o uprawnienia (albo w dzienniku pojawi się link „Kliknij tutaj, aby przyznać uprawnienia”): zaznacz <b>wszystkie</b> pola i <b>Zezwól</b>, potem uruchom jeszcze raz. W „Dzienniku wykonania” powinno być „Próbne streszczenie: …” i „Ustawiono harmonogram: co godzinę”.</li>
               <li><b>Wdróż → Zarządzaj wdrożeniami</b> → ✏️ (ołówek) → „Wersja”: <b>Nowa wersja</b> → <b>Wdróż</b>.</li>
-              <li>Wróć tutaj i kliknij <b>Synchronizuj teraz</b>. Ta ramka zniknie, a tytuły będą się uzupełniać w tle.</li>
+              <li>Wróć tutaj i kliknij <b>Synchronizuj teraz</b>. Ta ramka zniknie. Pierwsze streszczenia pojawią się przy wpisach w ciągu godziny (lista „Streścić”).</li>
             </ol>
+            <p class="pomoc">Silnik i model to ustawienia, nie kod: we Właściwościach skryptu możesz dodać <code>SILNIK</code> (gemini / ollama / wylaczony), <code>MODEL_KROTKI</code>, <code>MODEL_SZCZEGOLOWY</code>. Opis jest na początku części „STRESZCZENIA” w skrypcie.</p>
           </div>
           <button id="kopiuj-kod">Kopiuj kod połączenia dla innego urządzenia</button>
           <p class="pomoc">Kod połączenia zawiera tajny klucz. Wklejaj go tylko na swoich urządzeniach, nikomu go nie wysyłaj.</p>
@@ -170,6 +173,7 @@
   <script src="js/skrypt-google.js"></script>
   <script src="js/synchronizacja.js"></script>
   <script src="js/opisy.js"></script>
+  <script src="js/streszczenia.js"></script>
   <!-- Logowanie Google (tylko do synchronizacji; bez internetu aplikacja działa dalej) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
   <script src="js/app.js"></script>

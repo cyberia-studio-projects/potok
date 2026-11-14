@@ -14,7 +14,7 @@
      url:       "https://..."     albo null (notatka bez linku)
      tytul:     "..."             co pokazujemy jako nagłówek
      tekst:     "..."             oryginalny wpis (np. linia z Google Docs)
-     status:    Potok:   "skrzynka" | "do_streszczenia" | "obczaic"
+     status:    Potok:   "skrzynka" | "do_streszczenia" | "szczegolowo" | "obczaic"
                          | "zglebic" | "obsidian" | "muzyka" | "smieszne" | "archiwum"
                 Zadania: "zrobic_claude" | "zrobic_sam" | "zrobione"
      dodano:    "2026-11-08T16:40:00.000Z"   data dodania (automatycznie)
@@ -32,7 +32,8 @@
 
 // Statusy w kolejności wyświetlania + polskie nazwy.
 // Znaczenie (decyzja z 8.11.2026):
-//   Streścić – niech streści AI (NotebookLM); po streszczeniu można popchnąć dalej,
+//   Streścić – niech streści AI (od 14.11.2026 automat w skrypcie Google, wcześniej NotebookLM);
+//              po streszczeniu można popchnąć dalej, np. do „Streścić szczegółowo”,
 //   Obczaić  – przejrzeć, poeksplorować samemu,
 //   Zgłębić  – poświęcić czas: przeczytać / obejrzeć w całości (artykuł albo film),
 //   Zapisać do Obsidian – wiedza do notatek; lista eksportuje się osobno jako .md,
@@ -42,6 +43,9 @@
 const STATUSY = {
   skrzynka:        'Skrzynka (nieprzejrzane)',
   do_streszczenia: 'Streścić',
+  // Od 14.11.2026: po przeczytaniu krótkiego streszczenia AI można poprosić
+  // o szczegółowe (struktura, tezy, argumenty) – robi je skrypt Google.
+  szczegolowo:     'Streścić szczegółowo',
   obczaic:         'Obczaić',
   zglebic:         'Zgłębić',
   obsidian:        'Zapisać do Obsidian',
@@ -56,7 +60,7 @@ const STATUSY = {
 };
 
 // Podział statusów na dwie części aplikacji.
-const GRUPA_POTOK   = ['skrzynka', 'do_streszczenia', 'obczaic', 'zglebic', 'obsidian', 'muzyka', 'smieszne', 'archiwum'];
+const GRUPA_POTOK   = ['skrzynka', 'do_streszczenia', 'szczegolowo', 'obczaic', 'zglebic', 'obsidian', 'muzyka', 'smieszne', 'archiwum'];
 const GRUPA_ZADANIA = ['zrobic_claude', 'zrobic_sam', 'zrobione'];
 
 // Stare nazwy statusów → nowe. Stosowane przy każdym odczycie, więc dane

@@ -42,6 +42,11 @@ async function obsluzSkrypt(route) {
     if (/wolny/.test(dane.url)) return route.abort();   // skrypt nie odpowiedział (np. przekroczony czas)
     return odp({ tytul: 'Tytuł: ' + dane.url, autor: 'Autor testowy' });
   }
+  // Streszczenia AI – od wersji 4 skryptu (robi je harmonogram po stronie Google).
+  if (dane.akcja === 'streszczenia' && drive.wersjaSkryptu >= 4) {
+    drive.odczytyStreszczen.push(dane.od || '');
+    return odp({ streszczenia: drive.streszczenia.filter(x => !dane.od || x.zmieniono > dane.od), teraz: new Date().toISOString() });
+  }
   return odp({ blad: 'nieznana akcja' });
 }
 const CORS = { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Headers': '*', 'Access-Control-Allow-Methods': '*' };
@@ -108,7 +113,7 @@ const czekajNa = (s, wzor) => s.waitForFunction(w => new RegExp(w).test(document
 const plikNaDrive = tryb => JSON.parse(tryb === 'skrypt' ? drive.skrypt : Object.values(drive.pliki).find(p => p.name === 'Potok.json').tresc);
 
 async function scenariusz(przegladarka, tryb) {
-  drive = { pliki: {}, licznik: 0, zapisy: 0, skrypt: '', wersjaSkryptu: 1 };
+  drive = { pliki: {}, licznik: 0, zapisy: 0, skrypt: '', wersjaSkryptu: 1, streszczenia: [], odczytyStreszczen: [] };
   console.log(`--- Tryb: ${tryb === 'skrypt' ? 'skrypt Google' : 'Google Cloud'} ---`);
 
   // 0. Komputer: połączenie (w trybie skryptu – jak człowiek, przez ekran „Pliki”).
@@ -219,8 +224,14 @@ async function scenariusz(przegladarka, tryb) {
     await komp.s.waitForSelector('#skrypt-aktualizacja', { state: 'visible', timeout: 10000 });
     await komp.s.click('#pokaz-nowy-skrypt');
     const nowy = await komp.s.inputValue('#nowy-skrypt-tekst');
-    assert(nowy.includes("const KLUCZ = 'TAJNY-KLUCZ'") && nowy.includes('WERSJA_SKRYPTU = 3') && nowy.includes('function sprawdzTytuly'), 'nowy skrypt bez klucza lub wersji');
-    drive.wersjaSkryptu = 3;   // „wdrożono nową wersję”
+    assert(nowy.includes("const KLUCZ = 'TAJNY-KLUCZ'") && nowy.includes('WERSJA_SKRYPTU = 4') && nowy.includes('function sprawdzTytuly') && nowy.includes('function wlaczStreszczenia'), 'nowy skrypt bez klucza lub wersji');
+    // Skrypt w wersji 3 (tytuły działają, streszczeń brak) – ramka dalej prosi o wersję 4.
+    drive.wersjaSkryptu = 3;
+    await komp.s.click('#sync-teraz');
+    await komp.s.waitForFunction(() => Magazyn.wczytaj().find(w => w.url === 'https://example.com/z-komputera').autor === 'Autor testowy', null, { timeout: 15000 });
+    await komp.s.waitForFunction(() => Streszczenia.skryptStary(), null, { timeout: 10000 });
+    assert(await komp.s.isVisible('#skrypt-aktualizacja'), 'przy skrypcie v3 brak prośby o wersję 4');
+    drive.wersjaSkryptu = 4;   // „wdrożono nową wersję”
     await komp.s.click('#sync-teraz');
     await komp.s.waitForFunction(() => Magazyn.wczytaj().find(w => w.url === 'https://example.com/z-komputera').autor === 'Autor testowy', null, { timeout: 15000 });
     // Na komputerze: link z YouTube + dopisane „Streścić” → tytuł i autor też się pobierają, podpowiedź zostaje.
@@ -252,6 +263,33 @@ async function scenariusz(przegladarka, tryb) {
     await komp.s.fill('#szukaj', 'Autor testowy');
     assert(await komp.s.locator('#lista .autor').count() > 0, 'autor nie widać na liście');
     console.log('9. Tytuły: prośba o nowy skrypt, potem tytuł i autor same się uzupełniają (też na Drive).');
+
+    // 10. Streszczenia AI: skrypt (harmonogram) zapisał streszczenie → widać je na liście „Streścić”,
+    //     a stamtąd jednym kliknięciem „→ Streścić szczegółowo”. Potok.json nie dostaje streszczeń.
+    const w10 = await komp.s.evaluate(() => Magazyn.wczytaj().find(x => (x.url || '').includes('komp123')));
+    await komp.s.evaluate(id => Magazyn.zmienStatus(id, 'do_streszczenia'), w10.id);
+    await komp.s.click('nav [data-widok=listy]');
+    await komp.s.fill('#szukaj', '');
+    await komp.s.click('#statusy [data-lista=do_streszczenia]');
+    assert.match(await komp.s.textContent('#lista'), /w kolejce \(automat co godzinę\)/, 'brak informacji, że streszczenie czeka');
+    drive.streszczenia.push({ id: w10.id, url: w10.url, krotkie: { tekst: 'Film o <testach> po polsku.', model: 'gemini-3.5-flash-lite', data: new Date().toISOString() }, zmieniono: new Date().toISOString() });
+    await komp.s.click('#stan-sync');
+    await komp.s.waitForSelector('#lista .streszczenie', { timeout: 15000 });
+    assert.match(await komp.s.textContent('#lista .streszczenie'), /Film o <testach> po polsku\..*|Streszczenie.*Film o <testach>/s);
+    const od = drive.odczytyStreszczen[drive.odczytyStreszczen.length - 1];
+    assert(od, 'kolejne odczyty powinny pytać tylko o nowe streszczenia (od)');
+    await komp.s.click(`#lista [data-id="${w10.id}"][data-na=szczegolowo]`);
+    assert.strictEqual(await komp.s.evaluate(id => Magazyn.wczytaj().find(x => x.id === id).status, w10.id), 'szczegolowo');
+    await komp.s.click('#statusy [data-lista=szczegolowo]');
+    assert.match(await komp.s.textContent('#lista'), /Szczegółowe streszczenie w kolejce/);
+    await komp.s.click('nav [data-widok=eksport]');
+    assert.match(await komp.s.textContent('#stan-streszczen-ai'), /Streszczenia AI: gotowe 0 · do ręcznego 0 · czekają 1/);
+    await czekajWysylke(komp.s);
+    await komp.s.click('#stan-sync'); await czekajNa(komp.s, /zapisane/);
+    const zapisany = plikNaDrive('skrypt').wpisy.find(x => x.id === w10.id);
+    assert.strictEqual(zapisany.status, 'szczegolowo', 'decyzja „Streścić szczegółowo” nie trafiła na Drive');
+    assert(!JSON.stringify(plikNaDrive('skrypt')).includes('Film o <testach>'), 'streszczenie nie powinno trafiać do Potok.json');
+    console.log('10. Streszczenia AI: widać je przy wpisie, „→ Streścić szczegółowo” trafia na Drive.');
   }
 
   assert.deepStrictEqual([...komp.bledy, ...tel.bledy], [], 'błędy JavaScript na stronie');
