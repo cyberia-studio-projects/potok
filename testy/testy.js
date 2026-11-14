@@ -180,7 +180,7 @@ test('magazyn: przywrócenie kopii dokłada brakujące, niczego nie nadpisuje', 
 });
 
 test('statusy: dokładnie Streścić / Obczaić / Zgłębić / Archiwum (+ skrzynka)', () => {
-  rowne(GRUPA_POTOK.map(s => STATUSY[s]), ['Skrzynka (nieprzejrzane)', 'Streścić', 'Obczaić', 'Zgłębić', 'Zapisać do Obsidian', 'Muzyczki do zachowania', 'Śmieszne', 'Archiwum']);
+  rowne(GRUPA_POTOK.map(s => STATUSY[s]), ['Skrzynka (nieprzejrzane)', 'Streścić', 'Streścić szczegółowo', 'Obczaić', 'Zgłębić', 'Zapisać do Obsidian', 'Muzyczki do zachowania', 'Śmieszne', 'Archiwum']);
   rowne(GRUPA_ZADANIA.map(s => STATUSY[s]), ["Dla Claude'a", 'Zrobię sam', 'Zrobione']);
 });
 test('magazyn: stare „do przeczytania” samo przechodzi do „Zgłębić”, historia zostaje', () => {
@@ -406,4 +406,36 @@ test('eksport .md: sekcje wg statusu, data dodania przy każdym wpisie', () => {
   prawda(md.includes('  - oryginalnie: Obczaić https://a.pl'));
   prawda(md.includes('## Archiwum (1)'));
   prawda(!md.includes('Zgłębić'), 'pusta sekcja nie powinna się pojawić');
+});
+
+/* ---------------- Streszczenia AI (od wersji 22) ---------------- */
+
+test('streszczenia: „Streścić szczegółowo” jest w Potoku, zaraz po „Streścić”', () => {
+  rowne(STATUSY.szczegolowo, 'Streścić szczegółowo');
+  rowne(GRUPA_POTOK.indexOf('szczegolowo'), GRUPA_POTOK.indexOf('do_streszczenia') + 1);
+});
+test('streszczenia: zapamiętane, nowsze zastępują starsze, html bez wstrzykiwania', () => {
+  localStorage.removeItem(Streszczenia.kluczPamieci());
+  Streszczenia.zapamietaj([{ id: 's1', krotkie: { tekst: 'Stare', model: 'm', data: '2026-11-14T10:00:00Z' } }], '2026-11-14T10:00:00Z');
+  Streszczenia.zapamietaj([{ id: 's1', krotkie: { tekst: 'O <b>AI</b> **ważne**', model: 'gemini-3.5-flash-lite', data: '2026-11-14T11:00:00Z' } }], '2026-11-14T11:00:00Z');
+  rowne(Streszczenia.pamiec().od, '2026-11-14T11:00:00Z');
+  const h = Streszczenia.html({ id: 's1', url: 'https://a.pl', status: 'do_streszczenia' });
+  prawda(h.includes('&lt;b&gt;AI&lt;/b&gt;') && h.includes('<b>ważne</b>') && h.includes('gemini-3.5-flash-lite'), h);
+  prawda(!h.includes('Stare'), 'zostało stare streszczenie');
+  localStorage.removeItem(Streszczenia.kluczPamieci());
+});
+test('streszczenia: do ręcznego – widać powód; brak streszczenia przy innym statusie – nic', () => {
+  localStorage.removeItem(Streszczenia.kluczPamieci());
+  Streszczenia.zapamietaj([{ id: 's2', doRecznego: { krotkie: 'strona wymaga logowania – streść ręcznie' } }]);
+  prawda(/Do ręcznego.*logowania/.test(Streszczenia.html({ id: 's2', url: 'https://facebook.com/x', status: 'do_streszczenia' })));
+  rowne(Streszczenia.html({ id: 's2', url: 'https://facebook.com/x', status: 'zglebic' }), '');
+  localStorage.removeItem(Streszczenia.kluczPamieci());
+});
+test('streszczenia: eksport .md zawiera krótkie i szczegółowe streszczenie', () => {
+  localStorage.removeItem(Streszczenia.kluczPamieci());
+  Streszczenia.zapamietaj([{ id: 's3', krotkie: { tekst: 'Krótko\no tym.', model: 'm', data: '2026-11-14T10:00:00Z' },
+    szczegolowe: { tekst: '## Struktura\n- część 1', model: 'm', data: '2026-11-14T10:00:00Z' } }]);
+  const md = Eksport.markdown([{ id: 's3', url: 'https://a.pl', tytul: 'A', tekst: 'A', status: 'obsidian', dodano: '2026-11-14T10:00:00Z' }]);
+  prawda(md.includes('  - streszczenie: Krótko o tym.') && md.includes('    ## Struktura') && md.includes('    - część 1'), md);
+  localStorage.removeItem(Streszczenia.kluczPamieci());
 });

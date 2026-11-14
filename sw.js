@@ -1,8 +1,8 @@
 /* sw.js – service worker: zapamiętuje pliki aplikacji, żeby działała offline.
    Przy każdej zmianie plików podbij WERSJA – wtedy telefon pobierze nowe. */
-const WERSJA = 'potok-v21';
+const WERSJA = 'potok-v22';
 const PLIKI = ['./', 'index.html', 'styl.css', 'manifest.webmanifest', 'ikona.svg',
-  'js/magazyn.js', 'js/zip.js', 'js/import.js', 'js/eksport.js', 'js/skrypt-google.js', 'js/synchronizacja.js', 'js/opisy.js', 'js/app.js'];
+  'js/magazyn.js', 'js/zip.js', 'js/import.js', 'js/eksport.js', 'js/skrypt-google.js', 'js/synchronizacja.js', 'js/opisy.js', 'js/streszczenia.js', 'js/app.js'];
 
 self.addEventListener('install', e => e.waitUntil(caches.open(WERSJA).then(c => c.addAll(PLIKI))));
 self.addEventListener('activate', e => e.waitUntil(

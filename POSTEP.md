@@ -1,5 +1,24 @@
 # Potok – postęp prac i decyzje
 
+## 14.11.2026 – streszczenia AI: skrypt Google wersja 4 (wersja aplikacji 22)
+- **Po co:** zamiast ręcznie wysyłać listę „Streścić” do NotebookLM, streszczenia robią się same. Całość planu jest w projekcie LokalnyLLM (`D:\ClaudeCode\LokalnyLLM\POSTEP.md`).
+- **Skrypt Google v4** (`skrypt-google/Kod.gs`): funkcja `streszczajCoGodzine` uruchamiana co godzinę przez harmonogram Google (działa, gdy komputer jest wyłączony). Bierze wpisy „Streścić” (krótkie streszczenie, 3–5 zdań) i „Streścić szczegółowo” (struktura, tezy, argumenty z przykładami, co nowe, słabe punkty). Wynik zapisuje w `Potok/Streszczenia/<id wpisu>.json`. **Potok.json tylko czyta**, więc nie ma ryzyka nadpisania wpisów.
+  - Filmy z YouTube: adres idzie wprost do Gemini (sam film, bez listy/miksu), klatka co 10 s i niska rozdzielczość, żeby godzinny film zmieścił się w darmowym limicie. Tylko filmy publiczne.
+  - Strony: skrypt pobiera HTML i wycina sam tekst (bez skryptów, menu, stopek). Mniej niż 600 znaków (logowanie/paywall), Facebook/Instagram/LinkedIn/X/TikTok i pliki PDF → „✋ do ręcznego streszczenia” z powodem, bez pytania AI.
+  - Limit Gemini (kod 429) albo brak klucza: przerwa do następnej godziny, bez liczenia prób. Inne błędy: do 3 prób, potem wpis czeka na ręczne.
+  - Najwyżej 6 wpisów na godzinę (ustawienie `NA_RAZ`) i 5 s przerwy między zapytaniami.
+- **Silnik jako ustawienie** (Właściwości skryptu, nie kod): `SILNIK` = gemini (domyślnie) / ollama / wylaczony, `MODEL_KROTKI` i `MODEL_SZCZEGOLOWY` (domyślnie `gemini-3.5-flash-lite`: ok. 15 zapytań/min i 500 dziennie za darmo), `OLLAMA_ADRES` i `OLLAMA_MODEL` (Bielik) na wypadek przejścia na lokalny model. Ollama nie ogląda filmów – te idą wtedy do ręcznego.
+- **Klucz Gemini tylko we Właściwościach skryptu** (`GEMINI_KLUCZ`), nigdy w kodzie, bo repozytorium jest publiczne.
+- Funkcje do uruchomienia w edytorze: `wlaczStreszczenia` (zgody Google + próbne streszczenie + harmonogram co godzinę, bez dubli), `pokazModele` (lista modeli dostępnych dla klucza), `wylaczStreszczenia` (zdejmuje harmonogram, streszczenia zostają).
+- **Aplikacja (wersja 22):**
+  - nowy status i lista **„Streścić szczegółowo”** (zaraz po „Streścić”); przycisk „→ Streścić szczegółowo” jest na listach, nie w przeglądzie skrzynki, bo decyzję podejmujesz po przeczytaniu krótkiego streszczenia,
+  - streszczenie widać przy wpisie (na listach i w przeglądzie), z modelem i datą; „⏳ w kolejce” albo „✋ do ręcznego streszczenia: powód”,
+  - aplikacja pobiera streszczenia po każdej synchronizacji (`js/streszczenia.js`, akcja `streszczenia`, tylko zmienione od ostatniego razu) i pamięta je na urządzeniu (widać je bez internetu),
+  - eksport .md (także lista „Zapisać do Obsidian”) zawiera streszczenia,
+  - ramka „Zaktualizuj skrypt Google” pojawia się teraz przy skrypcie starszym niż 4 i ma kroki z kluczem Gemini; w Pliki jest linijka „Streszczenia AI: gotowe · do ręcznego · czekają”.
+- Eksport listy do NotebookLM zostaje (np. dla rzeczy „do ręcznego”).
+- Testy: `test-skryptu.js` sprawdza streszczenia na udawanym Google i Gemini (YouTube, paywall, Facebook, PDF, limit 429, 3 próby, brak klucza, Ollama, „BRAK TREŚCI”, NA_RAZ, harmonogram); 4 nowe testy w przeglądarce; krok 10 w `e2e-drive.js` (streszczenie widać na liście, „→ Streścić szczegółowo” trafia na Drive, streszczenie nie trafia do Potok.json).
+
 ## 9.11.2026 – skrypt Google wersja 3 (wersja aplikacji 20)
 - Objaw: „pobrane 0 · bez tytułu 25”, bez żadnego błędu. Skrypt v2 połykał każdy błąd pobierania i zwracał pusty tytuł. Najpewniej Google nie dał mu zgody na łączenie ze stronami (UrlFetchApp), bo przy „Nowej wersji” wdrożenia nie zawsze pyta o nowe uprawnienia.
 - Skrypt v3: zwraca `problem` (np. brak uprawnień, kod HTTP), ma akcję `wersja` i funkcję `sprawdzTytuly` do uruchomienia w edytorze (wymusza zgodę Google, w dzienniku pokazuje tytuł „Me at the zoo”).

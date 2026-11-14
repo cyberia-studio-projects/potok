@@ -60,6 +60,10 @@ const Eksport = {
         linie.push(`- ${glowna} · dodano ${this.dzien(w.dodano)}${dom}`);
         // Oryginalny wpis dopisujemy, jeśli różni się od tytułu.
         if (w.tekst && w.tekst !== w.tytul) linie.push(`  - oryginalnie: ${w.tekst}`);
+        // Streszczenia AI (jeśli są) – żeby trafiły do Obsidiana razem z linkiem.
+        const s = typeof Streszczenia !== 'undefined' && Streszczenia.dla(w.id);
+        if (s && s.krotkie) linie.push(`  - streszczenie: ${s.krotkie.tekst.replace(/\s*\n\s*/g, ' ')}`);
+        if (s && s.szczegolowe) linie.push('  - szczegółowe streszczenie:', ...s.szczegolowe.tekst.split('\n').map(l => '    ' + l));
       }
       linie.push('');
     }
